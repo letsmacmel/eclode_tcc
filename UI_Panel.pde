@@ -7,21 +7,6 @@ void desenharBarra() {
   desenharBotaoMostrarPadroes();
   desenharTabsCentro();
   desenharHeaderApp();
-  if (salvarFlash) {
-    float toastW = min(520, max(220, textWidth(statusMessage) + 44));
-    float toastH = 34;
-    float toastX = menuPadding;
-    float toastY = height - max(50, height * 0.062);
-    noStroke();
-    fill(red(UI_DARK), green(UI_DARK), blue(UI_DARK), 232);
-    rect(toastX, toastY, toastW, toastH, 8);
-    fill(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN));
-    rect(toastX, toastY, 3, toastH, 8, 0, 0, 8);
-    fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT), 238);
-    textAlign(LEFT, TOP);
-    textSize(constrain(height * 0.015, 11, 13));
-    text(statusMessage, toastX + 18, toastY + 9);
-  }
   colorMode(HSB, 360, 100, 100, 100);
 }
 
