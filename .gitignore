@@ -1,0 +1,24 @@
+# Processing/autosave temporaries
+*.autosave
+
+# Generated exports
+panfleto_*.png
+panfleto_*.jpg
+panfleto_*.jpeg
+panfleto_*.mp4
+shape_*.png
+shape_*.jpg
+shape_*.jpeg
+shape_video_*.mp4
+shape_video_*/
+
+# Runtime/media cache
+panfleto_media_cache/
+tools/
+
+# Imported user assets generated during experimentation
+data/imports/
+
+# Keep only lightweight app assets that are intentionally committed
+data/*
+!data/Montserrat-Regular.ttf
