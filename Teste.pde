@@ -12,15 +12,16 @@ import java.util.Iterator;
 // Eclode: sistema generativo para identidades responsivas.
 final String APP_NAME = "ECLODE";
 final String APP_TAGLINE = "";
-final int UI_LIGHT = 0xFFEDEFF4;
-final int UI_GREEN = 0xFF2F80C8;
-final int UI_BROWN = 0xFF403C8F;
-final int UI_DARK = 0xFF111216;
-final int UI_PANEL = 0xF5111216;
-final int UI_PANEL_SOFT = 0xE61B1D24;
-final int UI_LINE = 0x66464A55;
-final int UI_MUTED = 0xFF8F949E;
+final int UI_LIGHT = 0xFFEFEBE8;
+final int UI_GREEN = 0xFF687C49;
+final int UI_BROWN = 0xFF654940;
+final int UI_DARK = 0xFF222626;
+final int UI_PANEL = 0xF5222626;
+final int UI_PANEL_SOFT = 0xE6222626;
+final int UI_LINE = 0x66654940;
+final int UI_MUTED = 0xFFEFEBE8;
 PImage interfaceLogo;
+PShape interfaceLogoSvg;
 
 // AUDIO
 Minim      minim;
@@ -83,12 +84,12 @@ float   menuTabWidth = 36;
 float   menuPadding  = 22;
 float   menuScrollY = 0;
 float   menuMaxScrollY = 0;
-float   uiHeaderHeight = 60;
+float   uiHeaderHeight = 74;
 float   uiTabsHeight = 52;
 float[][] uiTopTabButtons = new float[4][4];
-String[] uiTopTabLabels = { "Mutacao", "Panfleto", "Estampa", "Saida" };
+String[] uiTopTabLabels = { "Mutação", "Panfleto", "Estampa", "Exportação" };
 int[] uiTopTabPages = { 0, 2, 3, 4 };
-int appPage = 0; // 0=Mutacao, 2=Panfleto, 3=Estampa, 4=Saida
+int appPage = 0; // 0=Mutação, 2=Panfleto, 3=Estampa, 4=Exportação
 float[] exportMainButton  = new float[4];
 float[][] exportOptionButtons = new float[4][4];
 String[] exportOptionLabels = { "PNG", "JPG (preto)", "SVG", "MP4 (5s)" };
@@ -97,13 +98,13 @@ float[] linhaReativosButton = new float[4];
 float[] simboloPrincipalButton = new float[4];
 float[] tipografiaPalavraButton = new float[4];
 float[][] tipografiaVarianteButtons = new float[2][4];
-String[] tipografiaVarianteLabels = { "PRINCIPAL", "VERSAO 2" };
+String[] tipografiaVarianteLabels = { "PRINCIPAL", "VERSÃO 2" };
 float[][] modoCorButtons = new float[3][4];
 String[] modoCorLabels = { "PRETO", "BRANCO", "ORIGINAL" };
 int[] modoCorValores = { 0, 1, 3 };
 int modoCorGlobal = 3;
 float[][] modoFormaButtons = new float[5][4];
-String[] modoFormaLabels = { "AUTO", "GRAVE", "MEDIO", "AGUDO", "PRESENCA" };
+String[] modoFormaLabels = { "AUTO", "GRAVE", "MÉDIO", "AGUDO", "PRESENÇA" };
 float[] loadBrandButton = new float[4];
 float[] loadImageBrandButton = new float[4];
 File marcaArquivoPendente = null;
@@ -114,15 +115,15 @@ float[] resetBrandButton = new float[4];
 float[] freezeBrandButton = new float[4];
 float[] exportPngButton = new float[4];
 float[] brandToggleButton = new float[4];
-float[][] mutationModeButtons = new float[13][4];
-String[] mutationModeLabels = { "ORIGINAL", "MASSA", "PONTOS", "LINHAS", "PARTICULAS", "GRID", "ECO", "PERLIN", "AREIA", "PELUCIA", "FIOS", "DIFUSAO", "GOSMA" };
+float[][] mutationModeButtons = new float[12][4];
+String[] mutationModeLabels = { "ORIGINAL", "MASSA", "PONTOS", "LINHAS", "PARTÍCULAS", "GRID", "ECO", "PERLIN", "AREIA", "PELÚCIA", "FIOS", "DIFUSÃO" };
 float[][] rdA, rdB, rdNextA, rdNextB, rdMask;
 int rdCols = 0, rdRows = 0, rdBrandSignature = -1;
 float rdMinX = 0, rdMinY = 0, rdMaxX = 0, rdMaxY = 0, rdComplexityKey = -1;
 float[][] deformationModeButtons = new float[7][4];
 String[] deformationModeLabels = { "SUTIL", "PULSO", "EXPLODIR", "ONDULAR", "FATIAR", "CAMPO", "GLITCH" };
 float[][] identityPresetButtons = new float[5][4];
-String[] identityPresetLabels = { "PULSO", "MODULAR", "ECLOSAO", "FANTASMA", "NERVOSO" };
+String[] identityPresetLabels = { "PULSO", "MODULAR", "ECLOSÃO", "FANTASMA", "NERVOSO" };
 float[][] meshDetailButtons = new float[0][4];
 String[] meshDetailLabels = {};
 float[] pointDensitySlider = new float[6];
@@ -132,7 +133,7 @@ float[][] paletteButtons = new float[4][4];
 String[] paletteLabels = { "BRANCO", "VIVO", "QUENTE", "AZUL" };
 float[][] designParamSliders = new float[20][6];
 String[] designParamLabels = {
-  "Reacao", "Deformacao", "Ruido", "Deslocamento", "Traco", "Escala", "Rotacao", "Fragmentacao", "Retorno", "Ataque",
+  "Reação", "Deformação", "Ruído", "Deslocamento", "Traço", "Escala", "Rotação", "Fragmentação", "Retorno", "Ataque",
   "Densidade", "Fluxo sonoro", "Peso tipográfico", "Curvatura", "Complexidade", "Dispersão", "Opacidade", "Matiz", "Saturação", "Velocidade"
 };
 int dragDesignParamSlider = -1;
@@ -143,7 +144,7 @@ boolean marcaPaletaTravada = false;
 int marcaPaletaCount = 3;
 int marcaPaletaSlotSelecionado = 0;
 int[] marcaPaletaCores = {
-  0xFFFFFFFF, 0xFF111111, 0xFF23D6C0, 0xFFF35C9A, 0xFFFFC857, 0xFF4C7DFF
+  0xFFEFEBE8, 0xFF687C49, 0xFF654940, 0xFF222626, 0xFFEFEBE8, 0xFF687C49
 };
 float[] marcaPaletaToggleButton = new float[4];
 float[] marcaPaletaAddButton = new float[4];
@@ -183,35 +184,35 @@ float[] estampaCoresMarcaButton = new float[4];
 float[][] estampaColorButtons = new float[3][4];
 String[] estampaColorLabels = { "Cor A", "Cor B", "Fundo" };
 String[] estampaModoLabels = {
-  "Pixel Grad.", "Compressao V.", "Grade Optica",
-  "Barras Irreg.", "Losangos", "Compressao R.",
+  "Pixel Grad.", "Compressão V.", "Grade Óptica",
+  "Barras Irreg.", "Losangos", "Compressão R.",
   "Ondas Fluidas", "Grade Ponto", "Fluxo V.",
-  "Interf. H.", "Refracao V.", "Faixas Liquidas",
+  "Interf. H.", "Refração V.", "Faixas Líquidas",
   "Ritmo Min.", "Diagonal Frag.", "Malha Geo.",
   "Campo Diag.", "Grade Compr.", "Zig Zag",
-  "Angular Disp.", "Expansao", "Ruido Modular",
+  "Angular Disp.", "Expansão", "Ruído Modular",
   "Barras Disp.", "Linhas Dados", "Labirinto"
 };
 float[][] padraoFormaButtons = new float[24][4];
 String[] padraoFormaLabels = {
-  "Pixel", "Comp. V", "Optica",
+  "Pixel", "Comp. V", "Óptica",
   "Barras", "Losango", "Comp. R",
   "Ondas", "Pontos", "Fluxo V",
-  "Interf.", "Refracao", "Liquido",
+  "Interf.", "Refração", "Líquido",
   "Min.", "Diag.", "Geo.",
-  "Cinetico", "Modulo", "ZigZag",
-  "Disperso", "Expande", "Ruido",
+  "Cinético", "Módulo", "ZigZag",
+  "Disperso", "Expande", "Ruído",
   "Barras 2", "Dados", "Labirinto"
 };
 int formaPadraoAtiva = 0;
 float[][] estampaPreviewButtons = new float[4][4];
-String[] estampaPreviewLabels = { "Padrao", "Tile", "Editorial", "Superficie" };
+String[] estampaPreviewLabels = { "Padrão", "Tile", "Editorial", "Superfície" };
 int estampaPreviewAtivo = 0;
 boolean modoPadraoEstampa = false;
 boolean estampaUsarCoresMarca = true;
-int estampaCorA = 0xFF111111;
-int estampaCorB = 0xFFF3EFE7;
-int estampaCorFundo = 0xFFF0ECE2;
+int estampaCorA = 0xFF222626;
+int estampaCorB = 0xFF687C49;
+int estampaCorFundo = 0xFFEFEBE8;
 boolean colorPickerAberto = false;
 int colorPickerTarget = 0;
 float colorPickerHue = 0;
@@ -240,7 +241,7 @@ float[][] panfletoLayoutButtons = new float[5][4];
 String[] panfletoLayoutLabels = { "Cartaz", "Editorial", "Manifesto", "Evento", "Foto Fundo" };
 int panfletoLayoutAtivo = 0;
 float[][] panfletoObjetoFormaButtons = new float[7][4];
-String[] panfletoObjetoFormaLabels = { "Circulo", "Oval", "Quadrado", "Losango", "Retangulo", "Marca", "Marca live" };
+String[] panfletoObjetoFormaLabels = { "Círculo", "Oval", "Quadrado", "Losango", "Retângulo", "Marca", "Marca live" };
 int panfletoObjetoForma = 0;
 float[][] panfletoObjetoQuantidadeButtons = new float[6][4];
 int panfletoObjetoQuantidade = 3;
@@ -258,16 +259,16 @@ float[] panfletoResetZoomButton = new float[4];
 float[] panfletoAgruparTextosButton = new float[4];
 float[] panfletoEstampaToggleButton = new float[4];
 float[][] panfletoEstampaAplicacaoButtons = new float[4][4];
-String[] panfletoEstampaAplicacaoLabels = { "Fundo", "Area", "Mascara", "Overlay" };
+String[] panfletoEstampaAplicacaoLabels = { "Fundo", "Área", "Máscara", "Overlay" };
 int panfletoEstampaAplicacao = 0;
 float[][] panfletoEstampaBlendButtons = new float[4][4];
 String[] panfletoEstampaBlendLabels = { "Normal", "Multiply", "Screen", "Overlay" };
 int panfletoEstampaBlend = 0;
 float[][] panfletoEstampaMascaraButtons = new float[3][4];
-String[] panfletoEstampaMascaraLabels = { "Retang", "Circulo", "Organico" };
+String[] panfletoEstampaMascaraLabels = { "Retâng.", "Círculo", "Orgânico" };
 int panfletoEstampaMascara = 0;
 float[][] panfletoEstampaSliders = new float[7][6];
-String[] panfletoEstampaSliderLabels = { "Intensidade", "Escala", "Repeticao", "Area X", "Area Y", "Largura", "Altura" };
+String[] panfletoEstampaSliderLabels = { "Intensidade", "Escala", "Repetição", "Área X", "Área Y", "Largura", "Altura" };
 int dragPanfletoEstampaSlider = -1;
 boolean panfletoEstampaAtiva = false;
 float panfletoEstampaIntensidade = 0.68;
@@ -280,11 +281,11 @@ float panfletoEstampaH = 0.34;
 float[] panfletoMascaraAddButton = new float[4];
 float[][] panfletoMascaraSelectButtons = new float[3][4];
 float[][] panfletoMascaraFluxoButtons = new float[3][4];
-String[] panfletoMascaraFluxoLabels = { "Organica", "Ondulado", "Rastro" };
+String[] panfletoMascaraFluxoLabels = { "Orgânica", "Ondulado", "Rastro" };
 float[][] panfletoMascaraConteudoButtons = new float[4][4];
 String[] panfletoMascaraConteudoLabels = { "Campo", "Ritmo", "Recorte", "Marca" };
 float[][] panfletoMascaraSliders = new float[8][6];
-String[] panfletoMascaraSliderLabels = { "Mascara X", "Mascara Y", "Largura", "Altura", "Rotacao", "Fluidez", "Peso visual", "Resposta" };
+String[] panfletoMascaraSliderLabels = { "Máscara X", "Máscara Y", "Largura", "Altura", "Rotação", "Fluidez", "Peso visual", "Resposta" };
 int dragPanfletoMascaraSlider = -1;
 int panfletoMascaraSelecionada = 0;
 boolean[] panfletoMascaraAtiva = { true, false, false };
@@ -306,7 +307,7 @@ boolean panfletoFundoPaletaTravada = true;
 int panfletoFundoPaletaCount = 3;
 int panfletoFundoPaletaSlotSelecionado = 0;
 int[] panfletoFundoPaletaCores = {
-  0xFF101218, 0xFFF1ECE3, 0xFFE8DDC2, 0xFF1C2C4A, 0xFFFFFFFF, 0xFF000000
+  0xFF222626, 0xFFEFEBE8, 0xFF687C49, 0xFF654940, 0xFFEFEBE8, 0xFF222626
 };
 float[] panfletoFundoPaletaToggleButton = new float[4];
 float[] panfletoFundoPaletaAddButton = new float[4];
@@ -315,7 +316,7 @@ float[] panfletoFundoPaletaHexApplyButton = new float[4];
 float[] panfletoFundoPaletaPasteButton = new float[4];
 float[][] panfletoFundoPaletaCountButtons = new float[4][4];
 float[][] panfletoFundoPaletaSlotButtons = new float[6][4];
-String panfletoFundoPaletaHexValor = "#101218";
+String panfletoFundoPaletaHexValor = "#222626";
 boolean panfletoFundoPaletaHexAtivo = false;
 boolean modoPanfleto = false;
 boolean exportandoPanfletoLimpo = false;
@@ -332,7 +333,7 @@ float panfletoMidiaFps = 12;
 int panfletoMidiaExportFrame = -1;
 float panfletoMidiaExportFps = 24;
 float[][] panfletoMarcaSliders = new float[3][6];
-String[] panfletoMarcaSliderLabels = { "Posicao horizontal", "Posicao vertical", "Tamanho" };
+String[] panfletoMarcaSliderLabels = { "Posição horizontal", "Posição vertical", "Tamanho" };
 int dragPanfletoMarcaSlider = -1;
 float panfletoMarcaX = 0;
 float panfletoMarcaY = 0;
@@ -350,7 +351,7 @@ float panfletoLogoExtraEscala = 0.42;
 float[] panfletoSimboloToggleButton = new float[4];
 float[] panfletoSimboloAcimaButton = new float[4];
 float[][] panfletoSimboloSliders = new float[3][6];
-String[] panfletoSimboloSliderLabels = { "Simbolo X", "Simbolo Y", "Tamanho simbolo" };
+String[] panfletoSimboloSliderLabels = { "Símbolo X", "Símbolo Y", "Tamanho símbolo" };
 int dragPanfletoSimboloSlider = -1;
 boolean panfletoMostrarSimbolo = false;
 boolean panfletoSimboloAcima = true;
@@ -470,7 +471,7 @@ String caminhoMarcaSVG = "";
 float[][] sliders;
 String[]  sliderLabels;
 boolean[] sliderVisivel;
-String[] sliderGrupoNomes = { "Som", "Marca", "Mutacao" };
+String[] sliderGrupoNomes = { "Som", "Marca", "Mutação" };
 int[][] sliderGrupoIndices = {
   { 26 },
   { 13, 14, 18, 20, 21, 24 },
@@ -597,6 +598,7 @@ void setup() {
   fontHelv     = carregarFonteInterface(64);
   fontHelvBold = fontHelv;
   interfaceLogo = null;
+  interfaceLogoSvg = loadShape("eclode_header_logo.svg");
   audioData = new AudioData();
   gestureData = new GestureData();
   mutationParams = new MutationParams();
@@ -624,8 +626,8 @@ void setup() {
 
 PFont carregarFonteInterface(float tamanho) {
   String[] candidatos = {
-    "Montserrat-Regular.ttf",
-    "Arial",
+    "Inter_18pt-SemiBold.ttf",
+    "Inter",
     "Segoe UI",
     "SansSerif"
   };

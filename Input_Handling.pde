@@ -44,7 +44,7 @@ void mousePressed() {
     for (int i = 0; i < padraoFormaButtons.length; i++) {
       if (dentroDoBotao(padraoFormaButtons[i])) {
         formaPadraoAtiva = i;
-        mostrarStatus("Padrao: " + padraoFormaLabels[i]);
+        mostrarStatus("Padrão: " + padraoFormaLabels[i]);
         return;
       }
     }
@@ -90,7 +90,7 @@ void mousePressed() {
     }
 
     if (dentroDoBotao(panfletoMidiaAddButton)) {
-      selectInput("Selecione GIF ou video do panfleto", "onMidiaSelecionadaPanfleto");
+      selectInput("Selecione GIF ou vídeo do panfleto", "onMidiaSelecionadaPanfleto");
       return;
     }
 
@@ -119,13 +119,13 @@ void mousePressed() {
 
     if (dentroDoBotao(panfletoSimboloToggleButton)) {
       panfletoMostrarSimbolo = !panfletoMostrarSimbolo;
-      mostrarStatus(panfletoMostrarSimbolo ? "Simbolo do panfleto ligado" : "Simbolo do panfleto desligado");
+      mostrarStatus(panfletoMostrarSimbolo ? "Símbolo do panfleto ligado" : "Símbolo do panfleto desligado");
       return;
     }
 
     if (dentroDoBotao(panfletoSimboloAcimaButton)) {
       panfletoSimboloAcima = !panfletoSimboloAcima;
-      mostrarStatus(panfletoSimboloAcima ? "Simbolo acima da marca" : "Simbolo livre");
+      mostrarStatus(panfletoSimboloAcima ? "Símbolo acima da marca" : "Símbolo livre");
       return;
     }
 
@@ -232,7 +232,7 @@ void mousePressed() {
 
   if (dentroDoBotao(freezeBrandButton)) {
     if (mutationParams != null) mutationParams.freezeState = !mutationParams.freezeState;
-    mostrarStatus(mutationParams != null && mutationParams.freezeState ? "Mutacao congelada" : "Mutacao liberada");
+    mostrarStatus(mutationParams != null && mutationParams.freezeState ? "Mutação congelada" : "Mutação liberada");
     return;
   }
 
@@ -279,7 +279,7 @@ void mousePressed() {
   for (int i = 0; i < deformationModeButtons.length; i++) {
     if (dentroDoBotao(deformationModeButtons[i])) {
       mutationParams.deformationMode = i;
-      mostrarStatus("Deformacao: " + deformationModeLabels[i]);
+      mostrarStatus("Deformação: " + deformationModeLabels[i]);
       return;
     }
   }
@@ -305,7 +305,7 @@ void mousePressed() {
 
   if (dentroDoBotao(simboloPrincipalButton)) {
     mostrarSimboloPrincipal = !mostrarSimboloPrincipal;
-    mostrarStatus(mostrarSimboloPrincipal ? "Simbolo principal ligado" : "Simbolo principal desligado");
+    mostrarStatus(mostrarSimboloPrincipal ? "Símbolo principal ligado" : "Símbolo principal desligado");
     return;
   }
 
@@ -326,7 +326,7 @@ void mousePressed() {
   for (int i = 0; i < modoCorButtons.length; i++) {
     if (dentroDoBotao(modoCorButtons[i])) {
       modoCorGlobal = modoCorValores[i];
-      mostrarStatus("Cor logo/simbolo: " + modoCorLabels[i]);
+      mostrarStatus("Cor logo/símbolo: " + modoCorLabels[i]);
       return;
     }
   }
@@ -381,7 +381,7 @@ boolean handlePageMousePressed() {
     }
     if (dentroDoBotao(freezeBrandButton)) {
       if (mutationParams != null) mutationParams.freezeState = !mutationParams.freezeState;
-      mostrarStatus(mutationParams != null && mutationParams.freezeState ? "Mutacao congelada" : "Mutacao liberada");
+      mostrarStatus(mutationParams != null && mutationParams.freezeState ? "Mutação congelada" : "Mutação liberada");
       return true;
     }
     if (dentroDoBotao(brandToggleButton)) {
@@ -417,7 +417,7 @@ boolean handlePageMousePressed() {
     for (int i = 0; i < deformationModeButtons.length; i++) {
       if (dentroDoBotao(deformationModeButtons[i])) {
         mutationParams.deformationMode = i;
-        mostrarStatus("Deformacao: " + deformationModeLabels[i]);
+        mostrarStatus("Deformação: " + deformationModeLabels[i]);
         return true;
       }
     }
@@ -591,7 +591,7 @@ boolean handlePageMousePressed() {
       return true;
     }
     if (dentroDoBotao(panfletoMidiaAddButton)) {
-      selectInput("Selecione GIF ou video do panfleto", "onMidiaSelecionadaPanfleto");
+      selectInput("Selecione GIF ou vídeo do panfleto", "onMidiaSelecionadaPanfleto");
       return true;
     }
     if (dentroDoBotao(panfletoFotoLimparButton)) {
@@ -629,12 +629,12 @@ boolean handlePageMousePressed() {
     }
     if (dentroDoBotao(panfletoSimboloToggleButton)) {
       panfletoMostrarSimbolo = !panfletoMostrarSimbolo;
-      mostrarStatus(panfletoMostrarSimbolo ? "Simbolo do panfleto ligado" : "Simbolo do panfleto desligado");
+      mostrarStatus(panfletoMostrarSimbolo ? "Símbolo do panfleto ligado" : "Símbolo do panfleto desligado");
       return true;
     }
     if (dentroDoBotao(panfletoSimboloAcimaButton)) {
       panfletoSimboloAcima = !panfletoSimboloAcima;
-      mostrarStatus(panfletoSimboloAcima ? "Simbolo acima da marca" : "Simbolo livre");
+      mostrarStatus(panfletoSimboloAcima ? "Símbolo acima da marca" : "Símbolo livre");
       return true;
     }
     for (int i = 0; i < panfletoSimboloSliders.length; i++) {
@@ -699,7 +699,7 @@ boolean handlePageMousePressed() {
     for (int i = 0; i < estampaPreviewButtons.length; i++) {
       if (dentroDoBotao(estampaPreviewButtons[i])) {
         estampaPreviewAtivo = i;
-        mostrarStatus("Previa da estampa: " + estampaPreviewLabels[i]);
+        mostrarStatus("Prévia da estampa: " + estampaPreviewLabels[i]);
         return true;
       }
     }
@@ -794,8 +794,8 @@ void randomizarEstampa() {
   formaPadraoAtiva = floor(random(0, estampaModoLabels.length));
   if (random(1) > 0.58) {
     estampaUsarCoresMarca = false;
-    estampaCorA = java.awt.Color.HSBtoRGB(random(1), random(0.50, 0.92), random(0.18, 0.52));
-    estampaCorB = java.awt.Color.HSBtoRGB(random(1), random(0.35, 0.86), random(0.62, 0.98));
+    estampaCorA = corInterfacePaleta(floor(random(4)));
+    estampaCorB = corInterfacePaleta(floor(random(4)));
   }
   mostrarStatus("Estampa gerada");
 }
@@ -826,8 +826,9 @@ boolean handleColorPickerMousePressed() {
   }
   if (mouseX >= colorPickerArea[0] && mouseX <= colorPickerArea[0] + colorPickerArea[2] &&
       mouseY >= colorPickerArea[1] && mouseY <= colorPickerArea[1] + colorPickerArea[3]) {
-    colorPickerSat = constrain((mouseX - colorPickerArea[0]) / max(1, colorPickerArea[2]), 0, 1);
-    colorPickerBri = constrain(1.0 - (mouseY - colorPickerArea[1]) / max(1, colorPickerArea[3]), 0, 1);
+    colorPickerHue = constrain((mouseX - colorPickerArea[0]) / max(1, colorPickerArea[2]), 0, 0.9999);
+    colorPickerSat = 1;
+    colorPickerBri = 1;
     aplicarColorPicker();
     return true;
   }
@@ -842,7 +843,7 @@ boolean handleColorPickerMousePressed() {
 }
 
 void aplicarColorPicker() {
-  int c = java.awt.Color.HSBtoRGB(colorPickerHue, colorPickerSat, colorPickerBri);
+  int c = corInterfacePaletaPorT(colorPickerHue);
   if (colorPickerTarget == 0) estampaCorA = c;
   else if (colorPickerTarget == 1) estampaCorB = c;
   else estampaCorFundo = c;
@@ -1108,7 +1109,7 @@ void atualizarSliderDensidadePontos() {
 }
 
 float[] hsvAtualMarca() {
-  color c = mutationParams != null ? mutationParams.primaryColor : color(255);
+  color c = mutationParams != null ? mutationParams.primaryColor : UI_LIGHT;
   int r = int(red(c));
   int g = int(green(c));
   int b = int(blue(c));
@@ -1366,14 +1367,12 @@ void atualizarSliderEstampaHSV() {
 }
 
 void aplicarCorEstampaHSV() {
-  float h = estampaHsvSliders[0][5];
-  float s = estampaHsvSliders[1][5];
-  float b = estampaHsvSliders[2][5];
-  float a = estampaHsvSliders[3][5];
-  colorMode(HSB, 360, 100, 100, 100);
-  setCorAtualEstampa(estampaColorTarget, color(h, s, b, a));
+  float h = estampaHsvSliders[0][5] / 360.0;
+  int c = corInterfacePaletaPorT(h);
+  float a = constrain(estampaHsvSliders[3][5], 0, 100) / 100.0;
+  int ca = (int)(a * 255.0);
+  setCorAtualEstampa(estampaColorTarget, (ca << 24) | (c & 0x00FFFFFF));
   estampaUsarCoresMarca = false;
-  colorMode(RGB, 255);
 }
 
 void mouseWheel(MouseEvent event) {
@@ -1629,9 +1628,9 @@ void onMidiaSelecionadaPanfleto(File selection) {
   if (ok) {
     panfletoFoto = null;
     panfletoFotoPath = "";
-    mostrarStatus("Midia carregada: " + selection.getName());
+    mostrarStatus("Mídia carregada: " + selection.getName());
   } else {
-    mostrarStatus("Falha ao carregar GIF/video");
+    mostrarStatus("Falha ao carregar GIF/vídeo");
   }
 }
 

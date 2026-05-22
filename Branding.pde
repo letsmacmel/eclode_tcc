@@ -467,7 +467,7 @@ void generateNewMutationDNA() {
     sliders[35][5] = mutationParams.growthSpeed;
   }
 
-  mostrarStatus("Nova variacao generativa");
+  mostrarStatus("Nova variação generativa");
 }
 
 void applyIdentityPreset(int idx) {

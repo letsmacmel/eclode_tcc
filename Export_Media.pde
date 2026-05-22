@@ -60,7 +60,7 @@ void salvarPGraphicsComoJPG(PGraphics pg, String caminho) {
 
 void salvarPanfletoMP4() {
   if (ffmpegPath == null || ffmpegPath.length() == 0 || !new File(ffmpegPath).exists()) {
-    mostrarStatus("FFmpeg nao encontrado");
+    mostrarStatus("FFmpeg não encontrado");
     return;
   }
 
@@ -186,7 +186,7 @@ void salvarEstampaJPG() {
 
 void salvarEstampaMP4() {
   if (ffmpegPath == null || ffmpegPath.length() == 0 || !new File(ffmpegPath).exists()) {
-    mostrarStatus("FFmpeg nao encontrado");
+    mostrarStatus("FFmpeg não encontrado");
     return;
   }
 
@@ -361,7 +361,7 @@ void alternarCapturaVideo() {
   }
 
   if (!new File(ffmpegPath).exists()) {
-    mostrarStatus("FFmpeg nao encontrado");
+    mostrarStatus("FFmpeg não encontrado");
     return;
   }
 

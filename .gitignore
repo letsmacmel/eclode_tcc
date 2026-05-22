@@ -21,4 +21,5 @@ data/imports/
 
 # Keep only lightweight app assets that are intentionally committed
 data/*
-!data/Montserrat-Regular.ttf
+!data/Inter_18pt-SemiBold.ttf
+!data/eclode_header_logo.svg

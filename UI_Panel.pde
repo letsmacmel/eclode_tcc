@@ -20,18 +20,23 @@ void desenharHeaderApp() {
   line(0, uiHeaderHeight - 1, width, uiHeaderHeight - 1);
   noStroke();
 
-  float logoX = 22;
+  float logoX = width * 0.5;
   float logoY = uiHeaderHeight * 0.5;
-  if (interfaceLogo != null && interfaceLogo.width > 0 && interfaceLogo.height > 0) {
+  if (interfaceLogoSvg != null && interfaceLogoSvg.width > 0 && interfaceLogoSvg.height > 0) {
+    shapeMode(CENTER);
+    float logoH = min(52, uiHeaderHeight - 18);
+    float logoW = logoH * interfaceLogoSvg.width / max(1, interfaceLogoSvg.height);
+    shape(interfaceLogoSvg, logoX, logoY, logoW, logoH);
+  } else if (interfaceLogo != null && interfaceLogo.width > 0 && interfaceLogo.height > 0) {
     imageMode(CENTER);
     noTint();
-    float logoH = min(40, uiHeaderHeight - 16);
+    float logoH = min(52, uiHeaderHeight - 18);
     float logoW = logoH * interfaceLogo.width / float(interfaceLogo.height);
-    image(interfaceLogo, logoX + logoW * 0.5, logoY, logoW, logoH);
+    image(interfaceLogo, logoX, logoY, logoW, logoH);
   } else {
     fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
-    textAlign(LEFT, CENTER);
-    textSize(constrain(height * 0.021, 16, 19));
+    textAlign(CENTER, CENTER);
+    textSize(constrain(height * 0.024, 18, 23));
     text(APP_NAME, logoX, logoY);
   }
 }
@@ -46,6 +51,7 @@ void desenharBotaoHeader(float x, float y, float w, float h, String label) {
 }
 
 void desenharTabsCentro() {
+  colorMode(RGB, 255);
   float leftX = max(0, menuOffsetX + menuWidth);
   float rightX = width - painelPadraoWidth + painelPadraoOffsetX;
   float tabsX = leftX;
@@ -77,10 +83,8 @@ void desenharTabsCentro() {
       fill(red(UI_BROWN), green(UI_BROWN), blue(UI_BROWN), 90);
       rect(x + 6, tabsY + 7, tabW - 12, uiTabsHeight - 14, 7);
     }
-    if (ativo) fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
-    else if (hover) fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT), 210);
-    else fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 185);
-    textoCentralizadoAjustado(uiTopTabLabels[i], x + tabW * 0.5, tabsY + uiTabsHeight * 0.5, tabW - 20, constrain(height * 0.0125, 9, 10.5), 7);
+    fill(239, 235, 232, ativo ? 255 : (hover ? 235 : 215));
+    textoCentralizadoAjustado(uiTopTabLabels[i], x + tabW * 0.5, tabsY + uiTabsHeight * 0.5, tabW - 20, constrain(height * 0.017, 13, 17), 10);
 
     if (ativo) {
       fill(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN));
@@ -96,7 +100,7 @@ void desenharMenuLateral() {
   float escalaUi = constrain(min(width, height) / 720.0, 0.70, 1.0);
   float y = uiHeaderHeight + 12 * escalaUi - menuScrollY;
   float buttonH = constrain(height * 0.039, 25, 34);
-  float sectionGap = 8 * escalaUi;
+  float sectionGap = 12 * escalaUi;
   float labelSize = constrain(min(width, height) * 0.014, 8.8, 11.5);
   float titleSize = constrain(min(width, height) * 0.022, 13.5, 19);
 
@@ -132,7 +136,7 @@ void desenharMenuLateral() {
   simboloPrincipalButton[1] = y;
   simboloPrincipalButton[2] = trackWidth;
   simboloPrincipalButton[3] = buttonH;
-  desenharBotaoAcaoEstado(simboloPrincipalButton, mostrarSimboloPrincipal ? "Simbolo principal: ON" : "Simbolo principal: OFF", mostrarSimboloPrincipal);
+  desenharBotaoAcaoEstado(simboloPrincipalButton, mostrarSimboloPrincipal ? "Símbolo principal: ON" : "Símbolo principal: OFF", mostrarSimboloPrincipal);
   y += simboloPrincipalButton[3] + 8;
 
   tipografiaPalavraButton[0] = panelInnerX;
@@ -158,7 +162,7 @@ void desenharMenuLateral() {
   fill(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN));
   textAlign(LEFT, TOP);
   textSize(labelSize);
-  text("Cor logo/simbolo", panelInnerX, y);
+  text("Cor logo/símbolo", panelInnerX, y);
   y += 18;
 
   float corGap = 8;
@@ -394,8 +398,8 @@ float desenharTituloPainel(String titulo, float x, float y, float titleSize) {
   textSize(titleTextSize);
   text(textoComReticencias(titulo, titleMaxW, titleTextSize), x, y);
   fill(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN));
-  rect(x, y + titleSize + 7, 28, 2, 2);
-  return y + 34;
+  rect(x, y + titleTextSize + 9, 28, 2, 2);
+  return y + titleTextSize + 34;
 }
 
 float desenharSecaoLabel(String label, float x, float y, float labelSize) {
@@ -405,13 +409,13 @@ float desenharSecaoLabel(String label, float x, float y, float labelSize) {
   strokeWeight(1);
   line(x, y, x + sectionW, y);
   noStroke();
-  y += 11;
+  y += 13;
   fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED));
   textAlign(LEFT, TOP);
-  float sectionTextSize = tamanhoTextoParaCaber(label, constrain(labelSize, 9, 10.5), 7.5, sectionW);
+  float sectionTextSize = tamanhoTextoParaCaber(label, constrain(labelSize * 1.28, 11.5, 14.5), 9.5, sectionW);
   textSize(sectionTextSize);
   text(textoComReticencias(label, sectionW, sectionTextSize), x, y);
-  return y + 25;
+  return y + sectionTextSize + 30;
 }
 
 float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, float labelSize, float titleSize) {
@@ -441,7 +445,7 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   desenharBotaoAcao(loadImageBrandButton, "Carregar PNG/JPG");
   y += buttonH + 8;
 
-  fill(150);
+  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 185);
   textAlign(LEFT, TOP);
   textSize(constrain(height * 0.014, 10, 12));
   text(activeBrandName, x, y);
@@ -453,7 +457,7 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   randomDNAButton[1] = y;
   randomDNAButton[2] = w;
   randomDNAButton[3] = buttonH;
-  desenharBotaoAcao(randomDNAButton, "Gerar variacao");
+  desenharBotaoAcao(randomDNAButton, "Gerar variação");
   y += buttonH + 8;
 
   resetBrandButton[0] = x;
@@ -616,7 +620,7 @@ float desenharPainelPanfletoEsquerdo(float x, float y, float w, float buttonH, f
 
   y = desenharSecaoLabel("Estado", x, y, labelSize);
 
-  fill(175);
+  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 190);
   textAlign(LEFT, TOP);
   textSize(labelSize + 1);
   text("Formato: " + panfletoFormatoLabels[panfletoFormatoAtivo], x, y);
@@ -628,14 +632,14 @@ float desenharPainelPanfletoEsquerdo(float x, float y, float w, float buttonH, f
   text("Foto: " + (panfletoFoto != null ? "carregada" : "nenhuma"), x, y);
   y += 34;
 
-  y = desenharSecaoLabel("Aplicacao", x, y, labelSize);
-  text("Posicao: " + nf(panfletoMarcaX, 0, 0) + " / " + nf(panfletoMarcaY, 0, 0), x, y);
+  y = desenharSecaoLabel("Aplicação", x, y, labelSize);
+  text("Posição: " + nf(panfletoMarcaX, 0, 0) + " / " + nf(panfletoMarcaY, 0, 0), x, y);
   y += 24;
   text("Tamanho: " + nf(panfletoMarcaEscala, 0, 2), x, y);
   y += 24;
   text("Textos: " + (panfletoMostrarTextos ? "ligados" : "desligados"), x, y);
   y += 24;
-  text("Simbolo: " + (panfletoMostrarSimbolo ? "ligado" : "desligado"), x, y);
+  text("Símbolo: " + (panfletoMostrarSimbolo ? "ligado" : "desligado"), x, y);
   return y + 22;
 }
 
@@ -657,7 +661,7 @@ float desenharPainelEstampaEsquerdo(float x, float y, float w, float buttonH, fl
   desenharBotaoAcao(estampaFotoLimparButton, "Remover textura");
   y += buttonH + 14;
 
-  fill(175);
+  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 190);
   textAlign(LEFT, TOP);
   textSize(labelSize + 1);
   text("Identidade: " + (activeBrand != null ? activeBrand.name : "nenhuma"), x, y);
@@ -665,7 +669,7 @@ float desenharPainelEstampaEsquerdo(float x, float y, float w, float buttonH, fl
   text("Textura: " + (estampaFoto != null ? estampaFoto.width + "x" + estampaFoto.height : "opcional"), x, y);
   y += 32;
 
-  y = desenharSecaoLabel("Previa", x, y, labelSize);
+  y = desenharSecaoLabel("Prévia", x, y, labelSize);
   float gap = 6;
   float smallH = constrain(height * 0.035, 23, 29);
   float bw = (w - gap) * 0.5;
@@ -680,7 +684,7 @@ float desenharPainelEstampaEsquerdo(float x, float y, float w, float buttonH, fl
   }
   y += (smallH + gap) * 2 + 14;
 
-  y = desenharSecaoLabel("Aplicacao", x, y, labelSize);
+  y = desenharSecaoLabel("Aplicação", x, y, labelSize);
   estampaRandomButton[0] = x;
   estampaRandomButton[1] = y;
   estampaRandomButton[2] = w;
@@ -712,7 +716,7 @@ float desenharPainelEstampaEsquerdo(float x, float y, float w, float buttonH, fl
 }
 
 float desenharPainelExportEsquerdo(float x, float y, float w, float buttonH, float labelSize, float titleSize) {
-  y = desenharTituloPainel("5 Saida", x, y, titleSize);
+  y = desenharTituloPainel("Exportação", x, y, titleSize);
   y = desenharSecaoLabel("Exportar", x, y, labelSize);
   for (int i = 0; i < exportPageButtons.length; i++) {
     exportPageButtons[i][0] = x;
@@ -726,7 +730,7 @@ float desenharPainelExportEsquerdo(float x, float y, float w, float buttonH, flo
     y += buttonH + 8;
   }
   if (videoRecording) {
-    fill(150);
+    fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 185);
     textAlign(LEFT, TOP);
     textSize(constrain(height * 0.014, 10, 12));
     text(recordedFrames + " / " + exportFrames + " quadros", x, y);
@@ -769,14 +773,14 @@ void desenharMenuPadroes() {
   if (appPage >= 0) return;
 
   noStroke();
-  fill(26, 26, 26, 248);
+  fill(red(UI_DARK), green(UI_DARK), blue(UI_DARK), 248);
   rect(panelX, 0, painelPadraoWidth, height);
-  stroke(51);
+  stroke(red(UI_BROWN), green(UI_BROWN), blue(UI_BROWN), 180);
   line(panelX, 0, panelX, height);
   noStroke();
   clip(panelX, 0, painelPadraoWidth, height);
 
-  fill(224);
+  fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT), 230);
   textAlign(LEFT, TOP);
   textSize(constrain(height * 0.022, 15, 19));
   text("Panfleto", innerX, y);
@@ -792,7 +796,7 @@ void desenharMenuPadroes() {
   fill(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN));
   textAlign(LEFT, TOP);
   textSize(labelSize);
-  text("Linguagem do padrao", innerX, y);
+  text("Linguagem do padrão", innerX, y);
   y += 18;
 
   float gap = 8;
@@ -915,7 +919,7 @@ float desenharPainelDesignDireito(float x, float y, float w, float buttonH, floa
   float[] hsv = hsvAtualMarca();
   float[] hsvMin = { 0, 0, 0, 0 };
   float[] hsvMax = { 360, 100, 100, 100 };
-  float stepHsv = constrain(height * 0.050, 30, 38);
+  float stepHsv = constrain(height * 0.055, 36, 44);
   for (int i = 0; i < marcaHsvSliders.length; i++) {
     marcaHsvSliders[i][0] = x;
     marcaHsvSliders[i][1] = y;
@@ -955,9 +959,9 @@ float desenharPainelDesignDireito(float x, float y, float w, float buttonH, floa
       int decimals = (i == 6 || i == 8 || i == 9 || i == 13 || i == 14 || i == 16 || i == 18 || i == 19) ? 3 : 2;
       if (i == 17) decimals = 0;
       desenharSliderGenerico(designParamSliders[i], designParamLabels[i], decimals);
-      y += constrain(height * 0.050, 30, 38);
+      y += constrain(height * 0.055, 36, 44);
     }
-    y += 10;
+    y += 18;
   }
 
   return y + 16;
@@ -971,9 +975,9 @@ float desenharControlePaletaMarca(float x, float y, float w, float buttonH, floa
   marcaPaletaToggleButton[2] = w;
   marcaPaletaToggleButton[3] = buttonH;
   desenharBotaoAcaoEstado(marcaPaletaToggleButton, marcaPaletaTravada ? "Paleta ligada" : "Paleta desligada", marcaPaletaTravada);
-  y += buttonH + 8;
+  y += buttonH + 12;
 
-  float gap = 6;
+  float gap = 8;
   float targetH = constrain(height * 0.034, 23, 28);
   float countW = (w - gap * 3) / 4.0;
   for (int i = 0; i < marcaPaletaCountButtons.length; i++) {
@@ -1132,11 +1136,11 @@ void desenharCampoHexMarca(float[] campo, String valor, boolean ativo) {
   float y = campo[1];
   float w = campo[2];
   float h = campo[3];
-  stroke(ativo ? color(86, 170, 248) : color(48, 53, 63));
-  fill(ativo ? color(28, 32, 39) : color(18, 20, 25));
+  stroke(ativo ? UI_GREEN : UI_LINE);
+  fill(ativo ? UI_PANEL_SOFT : UI_DARK);
   rect(x, y, w, h, 6);
   noStroke();
-  fill(ativo ? 238 : 178);
+  fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT), ativo ? 238 : 178);
   textAlign(LEFT, CENTER);
   textSize(constrain(height * 0.014, 10, 12));
   String exibido = (valor == null || valor.length() == 0) ? "#RRGGBB" : valor.toUpperCase();
@@ -1149,16 +1153,16 @@ void desenharFaixaCorMarca(int tipo, float[] s, float hueBase, float satBase, fl
   float sy = s[1] + 6;
   float sw = max(24, s[2] - 64);
   float t = constrain((s[5] - s[3]) / max(0.0001, s[4] - s[3]), 0, 1);
-  if (tipo == 0) desenharFaixaMatiz(sx, sy, sw, 5);
-  if (tipo == 1) desenharFaixaSaturacao(sx, sy, sw, 5, hueBase, briBase);
-  if (tipo == 2) desenharFaixaLuminosidade(sx, sy, sw, 5, hueBase, satBase);
-  if (tipo == 3) desenharFaixaAlpha(sx, sy, sw, 5, hueBase, satBase, briBase);
+  if (tipo == 0) desenharFaixaMatizCompleta(sx, sy, sw, 5);
+  if (tipo == 1) desenharFaixaSaturacaoCompleta(sx, sy, sw, 5, hueBase, briBase);
+  if (tipo == 2) desenharFaixaLuminosidadeCompleta(sx, sy, sw, 5, hueBase, satBase);
+  if (tipo == 3) desenharFaixaAlphaCompleta(sx, sy, sw, 5, hueBase, satBase, briBase);
   noStroke();
-  fill(245);
+  fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   ellipse(sx + sw * t, sy + 2.5, 11, 11);
 }
 
-void desenharFaixaMatiz(float x, float y, float w, float h) {
+void desenharFaixaMatizCompleta(float x, float y, float w, float h) {
   colorMode(HSB, 360, 100, 100, 100);
   noStroke();
   int passos = max(12, int(w));
@@ -1170,7 +1174,7 @@ void desenharFaixaMatiz(float x, float y, float w, float h) {
   colorMode(RGB, 255);
 }
 
-void desenharFaixaSaturacao(float x, float y, float w, float h, float hueBase, float briBase) {
+void desenharFaixaSaturacaoCompleta(float x, float y, float w, float h, float hueBase, float briBase) {
   colorMode(HSB, 360, 100, 100, 100);
   noStroke();
   int passos = max(12, int(w));
@@ -1182,7 +1186,7 @@ void desenharFaixaSaturacao(float x, float y, float w, float h, float hueBase, f
   colorMode(RGB, 255);
 }
 
-void desenharFaixaLuminosidade(float x, float y, float w, float h, float hueBase, float satBase) {
+void desenharFaixaLuminosidadeCompleta(float x, float y, float w, float h, float hueBase, float satBase) {
   colorMode(HSB, 360, 100, 100, 100);
   noStroke();
   int passos = max(12, int(w));
@@ -1194,11 +1198,12 @@ void desenharFaixaLuminosidade(float x, float y, float w, float h, float hueBase
   colorMode(RGB, 255);
 }
 
-void desenharFaixaAlpha(float x, float y, float w, float h, float hueBase, float satBase, float briBase) {
+void desenharFaixaAlphaCompleta(float x, float y, float w, float h, float hueBase, float satBase, float briBase) {
   noStroke();
   int blocos = max(8, int(w / 8));
   for (int i = 0; i < blocos; i++) {
-    fill(i % 2 == 0 ? 42 : 78);
+    int c = (i % 2 == 0) ? UI_DARK : UI_BROWN;
+    fill(red(c), green(c), blue(c));
     rect(x + i * (w / blocos), y, ceil(w / blocos) + 1, h);
   }
   colorMode(HSB, 360, 100, 100, 100);
@@ -1211,6 +1216,50 @@ void desenharFaixaAlpha(float x, float y, float w, float h, float hueBase, float
   colorMode(RGB, 255);
 }
 
+void desenharFaixaMatiz(float x, float y, float w, float h) {
+  noStroke();
+  for (int i = 0; i < 4; i++) {
+    int c = corInterfacePaleta(i);
+    fill(red(c), green(c), blue(c));
+    rect(x + i * w / 4.0, y, w / 4.0 + 1, h);
+  }
+}
+
+void desenharFaixaSaturacao(float x, float y, float w, float h, float hueBase, float briBase) {
+  noStroke();
+  for (int i = 0; i < 4; i++) {
+    int c = corInterfacePaleta(i);
+    fill(red(c), green(c), blue(c), 70 + i * 45);
+    rect(x + i * w / 4.0, y, w / 4.0 + 1, h);
+  }
+}
+
+void desenharFaixaLuminosidade(float x, float y, float w, float h, float hueBase, float satBase) {
+  noStroke();
+  for (int i = 0; i < 4; i++) {
+    int c = corInterfacePaleta(i);
+    fill(red(c), green(c), blue(c));
+    rect(x + i * w / 4.0, y, w / 4.0 + 1, h);
+  }
+}
+
+void desenharFaixaAlpha(float x, float y, float w, float h, float hueBase, float satBase, float briBase) {
+  noStroke();
+  int blocos = max(8, int(w / 8));
+  for (int i = 0; i < blocos; i++) {
+    int c = (i % 2 == 0) ? UI_DARK : UI_BROWN;
+    fill(red(c), green(c), blue(c));
+    rect(x + i * (w / blocos), y, ceil(w / blocos) + 1, h);
+  }
+  int passos = max(12, int(w));
+  for (int i = 0; i < passos; i++) {
+    float alphaVal = map(i, 0, passos - 1, 0, 100);
+    int c = corInterfacePaletaPorT(float(i) / max(1, passos - 1));
+    fill(red(c), green(c), blue(c), alphaVal);
+    rect(x + i * (w / passos), y, ceil(w / passos) + 1, h);
+  }
+}
+
 void zerarSliderDesign(int idx) {
   if (idx < 0 || idx >= designParamSliders.length) return;
   for (int j = 0; j < designParamSliders[idx].length; j++) {
@@ -1220,19 +1269,19 @@ void zerarSliderDesign(int idx) {
 
 float desenharPainelExportDireito(float x, float y, float w, float buttonH, float labelSize, float titleSize) {
   y = desenharTituloPainel("O que levar", x, y, titleSize);
-  y = desenharSecaoLabel("Modulos de saida", x, y, labelSize);
-  fill(150);
+  y = desenharSecaoLabel("Módulos de saída", x, y, labelSize);
+  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 185);
   textAlign(LEFT, TOP);
   textSize(constrain(height * 0.015, 11, 13));
   text("Panfleto: layout editorial gerado com a identidade.", x, y, w, 54);
   y += 56;
-  text("Estampa: superficie/padrao derivado da identidade.", x, y, w, 54);
+  text("Estampa: superfície/padrão derivado da identidade.", x, y, w, 54);
   y += 56;
   text("Exportar: SVG, PNG, JPG ou MP4 do canvas central.", x, y, w, 54);
   y += 56;
   y = desenharSecaoLabel("Embed / API", x, y, labelSize);
-  fill(115);
-  text("Modulo previsto para live stream, ainda nao implementado nesta versao.", x, y, w, 90);
+  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 145);
+  text("Módulo previsto para live stream, ainda não implementado nesta versão.", x, y, w, 90);
   return y + 100;
 }
 
@@ -1240,12 +1289,12 @@ float desenharPainelEstampaDireito(float x, float y, float w, float buttonH, flo
   y = desenharTituloPainel("Estampa", x, y, titleSize);
   y = desenharSecaoLabel("Cor da estampa", x, y, labelSize);
   y = desenharControleCorEstampa(x, y, w, buttonH);
-  y += 10;
+  y += 18;
 
   y = desenharSecaoLabel("Sistema visual", x, y, labelSize);
 
   for (int i = 0; i < padraoSliderVisivel.length; i++) padraoSliderVisivel[i] = true;
-  float step = constrain(height * 0.050, 30, 38);
+  float step = constrain(height * 0.055, 36, 44);
   float[][] ranges = {
     { 3, 26 },
     { 40, 280 },
@@ -1272,10 +1321,10 @@ float desenharPainelEstampaDireito(float x, float y, float w, float buttonH, flo
     y += step;
   }
 
-  y += 12;
+  y += 22;
   y = desenharSecaoLabel("Linguagem generativa", x, y, labelSize);
-  float gap = 6;
-  float smallH = constrain(height * 0.036, 24, 30);
+  float gap = 8;
+  float smallH = constrain(height * 0.040, 27, 34);
   float bw = (w - gap) * 0.5;
   for (int i = 0; i < padraoFormaButtons.length; i++) {
     int col = i % 2;
@@ -1286,7 +1335,7 @@ float desenharPainelEstampaDireito(float x, float y, float w, float buttonH, flo
     padraoFormaButtons[i][3] = smallH;
     desenharBotaoAcaoEstado(padraoFormaButtons[i], estampaModoLabels[i], formaPadraoAtiva == i);
   }
-  y += (smallH + gap) * ceil(padraoFormaButtons.length / 2.0f) + 14;
+  y += (smallH + gap) * ceil(padraoFormaButtons.length / 2.0f) + 22;
   return y;
 }
 
@@ -1296,10 +1345,10 @@ float desenharControleCorEstampa(float x, float y, float w, float buttonH) {
   estampaCoresMarcaButton[2] = w;
   estampaCoresMarcaButton[3] = buttonH;
   desenharBotaoAcaoEstado(estampaCoresMarcaButton, estampaUsarCoresMarca ? "Cores da marca" : "Cores manuais", estampaUsarCoresMarca);
-  y += buttonH + 8;
+  y += buttonH + 12;
 
-  float gap = 6;
-  float btnH = constrain(height * 0.035, 23, 29);
+  float gap = 8;
+  float btnH = constrain(height * 0.038, 26, 32);
   float btnW = (w - gap * 2) / 3.0;
   for (int i = 0; i < estampaColorButtons.length; i++) {
     estampaColorButtons[i][0] = x + i * (btnW + gap);
@@ -1312,12 +1361,12 @@ float desenharControleCorEstampa(float x, float y, float w, float buttonH) {
     fill(red(c), green(c), blue(c), alpha(c));
     rect(estampaColorButtons[i][0] + 7, y + 7, 12, btnH - 14, 3);
   }
-  y += btnH + 26;
+  y += btnH + 32;
 
   float[] hsv = hsvAtualEstampa();
   float[] hsvMin = { 0, 0, 0, 0 };
   float[] hsvMax = { 360, 100, 100, 100 };
-  float step = constrain(height * 0.050, 30, 38);
+  float step = constrain(height * 0.055, 36, 44);
   for (int i = 0; i < estampaHsvSliders.length; i++) {
     estampaHsvSliders[i][0] = x;
     estampaHsvSliders[i][1] = y;
@@ -1346,7 +1395,7 @@ void desenharFaixaCorEstampa(int tipo, float[] s, float hueBase, float satBase) 
   if (tipo == 2) desenharFaixaLuminosidade(sx, sy, sw, 5, hueBase, satBase);
   if (tipo == 3) desenharFaixaAlpha(sx, sy, sw, 5, hueBase, satBase, estampaHsvSliders[2][5]);
   noStroke();
-  fill(245);
+  fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   ellipse(sx + sw * t, sy + 2.5, 11, 11);
 }
 
@@ -1396,15 +1445,15 @@ void desenharColorPicker() {
   float boxY = height * 0.5 - boxH * 0.5;
 
   noStroke();
-  fill(0, 178);
+  fill(red(UI_DARK), green(UI_DARK), blue(UI_DARK), 178);
   rect(0, 0, width, height);
-  fill(24, 24, 26, 252);
+  fill(red(UI_DARK), green(UI_DARK), blue(UI_DARK), 252);
   rect(boxX, boxY, boxW, boxH, 8);
-  stroke(78);
+  stroke(red(UI_BROWN), green(UI_BROWN), blue(UI_BROWN), 190);
   noFill();
   rect(boxX, boxY, boxW, boxH, 8);
 
-  fill(238);
+  fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   textAlign(LEFT, TOP);
   textSize(15);
   text("Janela de cores - " + estampaColorLabels[colorPickerTarget], boxX + 18, boxY + 16);
@@ -1414,24 +1463,22 @@ void desenharColorPicker() {
   colorPickerArea[2] = boxW - 36;
   colorPickerArea[3] = boxH - 150;
 
-  int cols = 30;
-  int rows = 22;
+  int cols = 4;
+  int rows = 2;
   float cw = colorPickerArea[2] / cols;
   float ch = colorPickerArea[3] / rows;
   noStroke();
   for (int gy = 0; gy < rows; gy++) {
     for (int gx = 0; gx < cols; gx++) {
-      float s = gx / float(max(1, cols - 1));
-      float b = 1.0 - gy / float(max(1, rows - 1));
-      int c = java.awt.Color.HSBtoRGB(colorPickerHue, s, b);
-      fill((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
+      int c = corInterfacePaleta(gx);
+      fill(red(c), green(c), blue(c), gy == 0 ? 255 : 145);
       rect(colorPickerArea[0] + gx * cw, colorPickerArea[1] + gy * ch, cw + 0.5, ch + 0.5);
     }
   }
-  stroke(255);
+  stroke(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   strokeWeight(1.5);
-  float pickX = colorPickerArea[0] + colorPickerSat * colorPickerArea[2];
-  float pickY = colorPickerArea[1] + (1.0 - colorPickerBri) * colorPickerArea[3];
+  float pickX = colorPickerArea[0] + (floor(constrain(colorPickerHue, 0, 0.9999) * 4.0) + 0.5) * cw;
+  float pickY = colorPickerArea[1] + colorPickerArea[3] * 0.25;
   noFill();
   ellipse(pickX, pickY, 12, 12);
 
@@ -1440,17 +1487,16 @@ void desenharColorPicker() {
   colorPickerHueArea[2] = boxW - 36;
   colorPickerHueArea[3] = 18;
   noStroke();
-  for (int i = 0; i < 80; i++) {
-    float h = i / 79.0;
-    int c = java.awt.Color.HSBtoRGB(h, 1, 1);
-    fill((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
-    rect(colorPickerHueArea[0] + i * colorPickerHueArea[2] / 80.0, colorPickerHueArea[1], colorPickerHueArea[2] / 80.0 + 1, colorPickerHueArea[3]);
+  for (int i = 0; i < 4; i++) {
+    int c = corInterfacePaleta(i);
+    fill(red(c), green(c), blue(c));
+    rect(colorPickerHueArea[0] + i * colorPickerHueArea[2] / 4.0, colorPickerHueArea[1], colorPickerHueArea[2] / 4.0 + 1, colorPickerHueArea[3]);
   }
-  fill(255);
+  fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   rect(colorPickerHueArea[0] + colorPickerHue * colorPickerHueArea[2] - 1, colorPickerHueArea[1] - 3, 2, colorPickerHueArea[3] + 6);
 
-  int preview = java.awt.Color.HSBtoRGB(colorPickerHue, colorPickerSat, colorPickerBri);
-  fill((preview >> 16) & 0xFF, (preview >> 8) & 0xFF, preview & 0xFF);
+  int preview = corInterfacePaletaPorT(colorPickerHue);
+  fill(red(preview), green(preview), blue(preview));
   rect(boxX + 18, boxY + boxH - 56, 54, 34, 5);
 
   colorPickerCancelButton[0] = boxX + boxW - 178;
@@ -1466,9 +1512,9 @@ void desenharColorPicker() {
 }
 
 float desenharSecaoPanfleto(float innerX, float y, float trackWidth, float buttonH, float labelSize) {
-  float sectionGap = 22;
-  float rowGap = 11;
-  float sliderStep = constrain(height * 0.056, 36, 46);
+  float sectionGap = 30;
+  float rowGap = 15;
+  float sliderStep = constrain(height * 0.060, 40, 50);
   for (int i = 0; i < designParamSliders.length; i++) zerarSliderDesign(i);
   for (int i = 0; i < panfletoEstampaSliders.length; i++) zerarSliderPanfletoEstampa(i);
 
@@ -1528,7 +1574,7 @@ float desenharSecaoPanfleto(float innerX, float y, float trackWidth, float butto
   y += formatoH * ceil(panfletoFormatoButtons.length / 2.0f) + gap * max(0, ceil(panfletoFormatoButtons.length / 2.0f) - 1) + sectionGap;
 
   y = desenharControlePaletaFundoPanfleto(innerX, y, trackWidth, buttonH, labelSize);
-  y += sectionGap - 4;
+  y += sectionGap;
 
   y = desenharSecaoLabel("Imagem de fundo", innerX, y, labelSize);
 
@@ -1543,7 +1589,7 @@ float desenharSecaoPanfleto(float innerX, float y, float trackWidth, float butto
   panfletoMidiaAddButton[1] = y;
   panfletoMidiaAddButton[2] = trackWidth;
   panfletoMidiaAddButton[3] = formatoH;
-  desenharBotaoAcao(panfletoMidiaAddButton, "Adicionar GIF/video");
+  desenharBotaoAcao(panfletoMidiaAddButton, "Adicionar GIF/vídeo");
   y += formatoH + rowGap;
 
   panfletoFotoLimparButton[0] = innerX;
@@ -1553,11 +1599,11 @@ float desenharSecaoPanfleto(float innerX, float y, float trackWidth, float butto
   desenharBotaoAcao(panfletoFotoLimparButton, "Remover fundo");
   y += formatoH + rowGap;
 
-  fill(102);
+  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 130);
   textAlign(LEFT, TOP);
   textSize(constrain(height * 0.0135, 10, 12));
   String fotoInfo = (panfletoMidiaFrames != null && panfletoMidiaFrames.length > 0) ?
-    "Midia: " + panfletoMidiaTipo + " / " + panfletoMidiaFrames.length + " frames" :
+    "Mídia: " + panfletoMidiaTipo + " / " + panfletoMidiaFrames.length + " frames" :
     ((fotoEditorialPanfleto() != null) ? "Foto: " + fotoEditorialPanfleto().width + "x" + fotoEditorialPanfleto().height : "Foto: nenhuma");
   text(fotoInfo, innerX, y);
   y += sectionGap + 8;
@@ -1596,7 +1642,7 @@ float desenharSecaoPanfleto(float innerX, float y, float trackWidth, float butto
       { 0.4, 12 },
       { 0.05, 1.0 }
     };
-    String[] marcaLabels = { "Deformacao", "Peso visual", "Opacidade" };
+    String[] marcaLabels = { "Deformação", "Peso visual", "Opacidade" };
     int[] paramIdx = { 1, 4, 16 };
     for (int j = 0; j < marcaBasicos.length; j++) {
       int idx = paramIdx[j];
@@ -1641,7 +1687,7 @@ float desenharSecaoPanfleto(float innerX, float y, float trackWidth, float butto
     }
   }
 
-  y += sectionGap - 2;
+  y += sectionGap;
   y = desenharSecaoLabel("Textos", innerX, y, labelSize);
 
   panfletoTextoToggleButton[0] = innerX;
@@ -1707,7 +1753,7 @@ float desenharSecaoPanfleto(float innerX, float y, float trackWidth, float butto
     y += campoH + sectionGap;
   }
 
-  y += sectionGap - 6;
+  y += sectionGap;
   y = desenharSecaoLabel(panfletoTextosAgrupados ? "Mover grupo de textos" : "Mover textos individualmente", innerX, y, labelSize);
 
   if (panfletoTextosAgrupados) {
@@ -2045,12 +2091,12 @@ void configurarControles() {
     "Y var2 direita",
     "Sensibilidade mic",
     "Intensidade de reacao",
-    "Deformacao",
-    "Ruido",
+    "Deformação",
+    "Ruído",
     "Deslocamento",
-    "Traco",
+    "Traço",
     "Escala",
-    "Rotacao",
+    "Rotação",
     "Velocidade de retorno",
     "Velocidade de crescimento"
   };
@@ -2065,10 +2111,10 @@ void desenharBotaoMostrar() {
   boolean hover = mouseX >= tabX && mouseX <= tabX + menuTabWidth && mouseY >= tabY && mouseY <= tabY + 112;
 
   noStroke();
-  fill(hover ? 32 : 18, hover ? 35 : 20, hover ? 42 : 25, 245);
+  fill(red(UI_DARK), green(UI_DARK), blue(UI_DARK), hover ? 255 : 245);
   rect(tabX, tabY, menuTabWidth, 112, 0, 10, 10, 0);
 
-  fill(hover ? 118 : 72, hover ? 190 : 166, 250);
+  fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT), 250);
   textAlign(CENTER, CENTER);
   textSize(constrain(height * 0.017, 11, 14));
   pushMatrix();
@@ -2087,10 +2133,10 @@ void desenharBotaoMostrarPadroes() {
   boolean hover = mouseX >= tabX && mouseX <= tabX + painelPadraoTabWidth && mouseY >= tabY && mouseY <= tabY + 112;
 
   noStroke();
-  fill(hover ? 32 : 18, hover ? 35 : 20, hover ? 42 : 25, 245);
+  fill(red(UI_DARK), green(UI_DARK), blue(UI_DARK), hover ? 255 : 245);
   rect(tabX, tabY, painelPadraoTabWidth, 112, 10, 0, 0, 10);
 
-  fill(hover ? 118 : 72, hover ? 190 : 166, 250);
+  fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT), 250);
   textAlign(CENTER, CENTER);
   textSize(constrain(height * 0.017, 11, 14));
   pushMatrix();

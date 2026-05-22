@@ -971,8 +971,6 @@ void renderMutableBrand(PGraphics pg, MutableBrand brand, MutationParams params,
     renderBrandHairFibers(pg, brand, params, fit, audio);
   } else if (params.mode == 11) {
     renderBrandReactionDiffusion(pg, brand, params, fit, audio);
-  } else if (params.mode == 12) {
-    renderBrandGoo(pg, brand, params, fit, audio);
   } else {
     renderBrandPointDots(pg, brand, params, fit, true, 90);
   }
@@ -1033,8 +1031,6 @@ void renderMutableBrandEmPonto(PGraphics pg, MutableBrand brand, MutationParams 
     renderBrandHairFibers(pg, brand, params, fit, audio);
   } else if (params.mode == 11) {
     renderBrandReactionDiffusion(pg, brand, params, fit, audio);
-  } else if (params.mode == 12) {
-    renderBrandGoo(pg, brand, params, fit, audio);
   } else {
     renderBrandPointDots(pg, brand, params, fit, true, 90);
   }
@@ -1567,16 +1563,16 @@ void renderBrandPerlinGossamer(PGraphics pg, MutableBrand brand, MutationParams 
   float mid = audio != null ? constrain(audio.mid * 1.1, 0, 1.2) : 0;
   float t = noiseDynamicTime * (0.18 + params.transformSpeed * 0.035);
 
-  float hairCount = constrain(120 + params.complexity * 360, 90, 520);
-  float hairLength = span * constrain(0.075 + params.displacementAmount * 0.0018, 0.07, 0.22);
-  float noiseScale = 0.0065 + params.noiseAmount * 0.0035;
-  float hairWeight = constrain(0.22 + params.strokeAmount * 0.035, 0.2, 1.2) / max(0.001, fit);
-  float lineAlpha = constrain(18 + params.opacityAmount * 30, 14, 42);
-  int densityLimit = 3;
-  float curlStrength = 1.15 + params.noiseAmount * 0.85 + mid * 0.22;
-  float maxDrift = span * 0.050;
+  float hairCount = constrain(260 + params.complexity * 620 + energy * 180, 220, 980);
+  float hairLength = span * constrain(0.040 + params.displacementAmount * 0.0012 + mid * 0.012, 0.040, 0.145);
+  float noiseScale = 0.0048 + params.noiseAmount * 0.0018;
+  float hairWeight = constrain(0.30 + params.strokeAmount * 0.040, 0.28, 1.05) / max(0.001, fit);
+  float lineAlpha = constrain(24 + params.opacityAmount * 42 + energy * 10, 22, 58);
+  int densityLimit = 7;
+  float curlStrength = 0.28 + params.noiseAmount * 0.22 + mid * 0.14;
+  float maxDrift = span * 0.030;
 
-  float cell = max(10, span * 0.055);
+  float cell = max(7, span * 0.036);
   int cols = max(3, ceil(span * 1.25 / cell));
   int rows = cols;
   int[] densityGrid = new int[cols * rows];
@@ -1586,6 +1582,7 @@ void renderBrandPerlinGossamer(PGraphics pg, MutableBrand brand, MutationParams 
   int attempts = min(pointCount, int(hairCount * 5.0));
   int drawn = 0;
 
+  renderBrandConnected(pg, brand, params, fit, false, 12 + energy * 10, 0);
   applyBrandColor(pg, params, lineAlpha, false, false);
   pg.strokeWeight(hairWeight);
 
@@ -1605,27 +1602,30 @@ void renderBrandPerlinGossamer(PGraphics pg, MutableBrand brand, MutationParams 
     if (densityGrid[gi] >= densityLimit) continue;
     densityGrid[gi]++;
 
-    float localLength = hairLength * (0.62 + hash1D(idx, 23.0) * 0.72);
-    int steps = constrain(round(localLength / max(1.6, span * 0.010)), 8, 26);
+    PVector tangent = tangentPerlinDaMarca(brand, idx);
+    PVector normal = brand.normalAproximadaDoPonto(idx, origin);
+    float localLength = hairLength * (0.82 + hash1D(idx, 23.0) * 0.68);
+    int steps = constrain(round(localLength / max(1.15, span * 0.0065)), 12, 38);
     float stepLen = localLength / max(1, steps);
-    float x = sx;
-    float y = sy;
+    float side = hash1D(idx, 71.0) > 0.5 ? 1.0 : -1.0;
+    float rootOffset = map(hash1D(idx, 31.0), 0, 1, -0.42, 0.42) * maxDrift;
+    float x = sx - tangent.x * localLength * 0.46 + normal.x * rootOffset;
+    float y = sy - tangent.y * localLength * 0.46 + normal.y * rootOffset;
     float prevX = x;
     float prevY = y;
-    float directionBias = hash1D(idx, 71.0) > 0.5 ? 1.0 : -1.0;
+    float angleBase = atan2(tangent.y, tangent.x);
 
     for (int k = 0; k < steps; k++) {
       float nx = (x + brand.center.x) * noiseScale;
       float ny = (y + brand.center.y) * noiseScale;
       float n = noise(nx + 17.0, ny + 41.0, t + k * 0.018);
       float n2 = noise(nx * 2.1 + 83.0, ny * 2.1 + 9.0, t * 0.72);
-      float angle = n * TWO_PI * curlStrength + (n2 - 0.5) * PI * 0.32;
-      angle += directionBias * 0.22;
+      float angle = angleBase + (n - 0.5) * curlStrength + (n2 - 0.5) * 0.22 + side * 0.035;
       x += cos(angle) * stepLen;
       y += sin(angle) * stepLen;
 
-      if (dist(x, y, sx, sy) > maxDrift + localLength) break;
-      if (!pontoPertoDaMarcaGossamer(brand, x + brand.center.x, y + brand.center.y, span * 0.040)) break;
+      if (dist(x, y, sx, sy) > maxDrift + localLength * 0.62) break;
+      if (!pontoPertoDaMarcaGossamer(brand, x + brand.center.x, y + brand.center.y, span * 0.024 + hairWeight * 7.0)) break;
 
       pg.line(prevX, prevY, x, y);
       prevX = x;
@@ -1634,8 +1634,26 @@ void renderBrandPerlinGossamer(PGraphics pg, MutableBrand brand, MutationParams 
     drawn++;
   }
 
-  renderBrandGossamerMesh(pg, brand, params, fit, lineAlpha * 0.42, span);
+  renderBrandGossamerMesh(pg, brand, params, fit, lineAlpha * 0.24, span);
   pg.popStyle();
+}
+
+PVector tangentPerlinDaMarca(MutableBrand brand, int idx) {
+  int total = brand.originalPoints.size();
+  if (total < 3) return new PVector(1, 0);
+  int prev = max(0, idx - 1);
+  int next = min(total - 1, idx + 1);
+  if (brand.breakBefore != null && brand.breakBefore.size() > idx && brand.breakBefore.get(idx)) prev = idx;
+  if (brand.breakBefore != null && brand.breakBefore.size() > next && brand.breakBefore.get(next)) next = idx;
+  PVector a = brand.originalPoints.get(prev);
+  PVector b = brand.originalPoints.get(next);
+  PVector tangent = PVector.sub(b, a);
+  if (tangent.mag() < 0.001) {
+    PVector normal = brand.normalAproximadaDoPonto(idx, brand.originalPoints.get(idx));
+    tangent.set(-normal.y, normal.x);
+  }
+  tangent.normalize();
+  return tangent;
 }
 
 void renderBrandGossamerMesh(PGraphics pg, MutableBrand brand, MutationParams params, float fit, float alphaLine, float span) {
