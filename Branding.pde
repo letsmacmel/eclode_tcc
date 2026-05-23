@@ -342,12 +342,15 @@ boolean carregarMarcaDireta(File selection) {
       asset.originalPoints.clear();
       asset.currentPoints.clear();
       asset.breakBefore.clear();
-      asset.minX = -img.width * 0.5;
-      asset.maxX = img.width * 0.5;
-      asset.minY = -img.height * 0.5;
-      asset.maxY = img.height * 0.5;
+      asset.pointLayer.clear();
+      asset.prepararMalhaDeImagem();
+      PImage base = asset.sourceImage != null ? asset.sourceImage : img;
+      asset.minX = -base.width * 0.5;
+      asset.maxX = base.width * 0.5;
+      asset.minY = -base.height * 0.5;
+      asset.maxY = base.height * 0.5;
       asset.center.set(0, 0);
-      asset.prepararPontosRasterLeves(img);
+      asset.prepararPontosRasterLeves(base);
       asset.pointCloudOnly = true;
       ok = true;
     }
@@ -372,7 +375,7 @@ boolean carregarMarcaDireta(File selection) {
         mostrarStatus("SVG abriu, mas falhou na previa");
         return false;
       }
-      asset.sourceShape = null;
+      asset.sourceShape = shape;
       asset.sourceImage = preview;
       asset.isRaster = true;
       asset.pointCloudOnly = false;
@@ -380,14 +383,15 @@ boolean carregarMarcaDireta(File selection) {
       asset.originalPoints.clear();
       asset.currentPoints.clear();
       asset.breakBefore.clear();
-      float sw = preview != null && preview.width > 1 ? preview.width : (shape.width > 1 ? shape.width : 600);
-      float sh = preview != null && preview.height > 1 ? preview.height : (shape.height > 1 ? shape.height : 600);
-      asset.minX = -sw * 0.5;
-      asset.minY = -sh * 0.5;
-      asset.maxX = sw * 0.5;
-      asset.maxY = sh * 0.5;
+      asset.pointLayer.clear();
+      asset.prepararMalhaDeImagem();
+      PImage base = asset.sourceImage != null ? asset.sourceImage : preview;
+      asset.minX = -base.width * 0.5;
+      asset.minY = -base.height * 0.5;
+      asset.maxX = base.width * 0.5;
+      asset.maxY = base.height * 0.5;
       asset.center.set(0, 0);
-      asset.prepararPontosRasterLeves(preview);
+      asset.prepararPontosRasterLeves(base);
       asset.pointCloudOnly = true;
       ok = true;
     }
@@ -406,8 +410,8 @@ PImage rasterizarShapeComoImagem(PShape shape) {
   try {
     float sw = shape.width > 1 ? shape.width : 600;
     float sh = shape.height > 1 ? shape.height : 600;
-    float maxSide = 2400.0;
-    float scale = min(4.0, maxSide / max(sw, sh));
+    float maxSide = 3200.0;
+    float scale = min(6.0, maxSide / max(sw, sh));
     int rw = max(32, ceil(sw * scale) + 8);
     int rh = max(32, ceil(sh * scale) + 8);
 
@@ -421,8 +425,9 @@ PImage rasterizarShapeComoImagem(PShape shape) {
     pg.translate(4, 4);
     pg.scale(scale);
     shape.disableStyle();
-    pg.noStroke();
     pg.fill(255, 255, 255, 255);
+    pg.stroke(255, 255, 255, 255);
+    pg.strokeWeight(max(0.65, 1.15 / max(0.001, scale)));
     pg.shape(shape, 0, 0);
     shape.enableStyle();
     pg.popMatrix();
@@ -1061,6 +1066,8 @@ class MutationParams {
 class MutableBrand {
   PShape sourceShape;
   PImage sourceImage;
+  ImageMask sourceMask;
+  MeshLogo meshLogo;
   ArrayList<PVector> originalPoints = new ArrayList<PVector>();
   ArrayList<PVector> currentPoints = new ArrayList<PVector>();
   ArrayList<Boolean> breakBefore = new ArrayList<Boolean>();
@@ -1103,6 +1110,7 @@ class MutableBrand {
     currentPoints.clear();
     breakBefore.clear();
     pointLayer.clear();
+    prepararMalhaDeImagem();
     if (sourceImage != null && sourceImage.width > 0 && sourceImage.height > 0) {
       minX = -sourceImage.width * 0.5;
       maxX = sourceImage.width * 0.5;
@@ -1145,14 +1153,27 @@ class MutableBrand {
     currentPoints.clear();
     breakBefore.clear();
     pointLayer.clear();
-    minX = -img.width * 0.5;
-    maxX = img.width * 0.5;
-    minY = -img.height * 0.5;
-    maxY = img.height * 0.5;
+    prepararMalhaDeImagem();
+    PImage base = sourceImage != null ? sourceImage : img;
+    minX = -base.width * 0.5;
+    maxX = base.width * 0.5;
+    minY = -base.height * 0.5;
+    maxY = base.height * 0.5;
     center.set(0, 0);
-    prepararPontosRasterLeves(img);
+    prepararPontosRasterLeves(base);
     hasPointData = originalPoints.size() > 1;
     return true;
+  }
+
+  void prepararMalhaDeImagem() {
+    sourceMask = null;
+    meshLogo = null;
+    if (sourceImage == null || sourceImage.width <= 0 || sourceImage.height <= 0) return;
+    sourceMask = new ImageMask(sourceImage);
+    if (sourceMask != null && sourceMask.texture != null && sourceMask.texture.width > 0 && sourceMask.texture.height > 0) {
+      sourceImage = sourceMask.texture;
+      meshLogo = new MeshLogo(sourceImage);
+    }
   }
 
   void extractPointsFromShape(PShape shape) {
@@ -1471,6 +1492,7 @@ class MutableBrand {
     for (int i = 0; i < currentPoints.size(); i++) {
       currentPoints.get(i).set(originalPoints.get(i));
     }
+    if (meshLogo != null) meshLogo.reset();
     currentScale = baseScale;
     currentStroke = baseStroke;
     currentRotation = 0;
@@ -1534,6 +1556,7 @@ class MutableBrand {
     currentScale = lerp(currentScale, targetScale, lerpSpeed);
     currentStroke = lerp(currentStroke, targetStroke, lerpSpeed);
     currentRotation = lerp(currentRotation, targetRotation, lerpSpeed);
+    if (meshLogo != null) meshLogo.update(audio, params);
 
     if (!hasPointData) return;
 
