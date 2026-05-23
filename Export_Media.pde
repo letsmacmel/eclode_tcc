@@ -16,6 +16,7 @@ void salvarPanfletoJPG() {
   int outH = tamanho[1];
 
   PGraphics pg = createGraphics(outW, outH, P2D);
+  pg.smooth(8);
   try {
     PImage recorte = capturarRecortePanfletoPreview(-1, false);
     if (recorte == null) {
@@ -49,6 +50,7 @@ void preencherFundoSolidoPanfleto(PGraphics pg) {
 
 void salvarPGraphicsComoJPG(PGraphics pg, String caminho) {
   PGraphics jpg = createGraphics(pg.width, pg.height, P2D);
+  jpg.smooth(8);
   jpg.beginDraw();
   preencherFundoSolidoPanfleto(jpg);
   jpg.imageMode(CORNER);
@@ -73,6 +75,7 @@ void salvarPanfletoMP4() {
   String caminho = sketchPath("panfleto_" + timestamp + ".mp4");
 
   PGraphics pg = createGraphics(outW, outH, P2D);
+  pg.smooth(8);
   Process proc = null;
   OutputStream input = null;
   byte[] buffer = new byte[outW * outH * 4];
@@ -171,6 +174,7 @@ void salvarEstampaJPG() {
     return;
   }
   PGraphics pg = createGraphics(recorte.width, recorte.height, P2D);
+  pg.smooth(8);
   pg.beginDraw();
   pg.colorMode(RGB, 255);
   int fundo = estampaUsarCoresMarca ? color(238, 235, 228) : estampaCorFundo;
@@ -203,6 +207,7 @@ void salvarEstampaMP4() {
   int totalFrames = fps * 10;
   String caminho = sketchPath("estampa_" + timestamp + ".mp4");
   PGraphics pg = createGraphics(outW, outH, P2D);
+  pg.smooth(8);
   Process proc = null;
   OutputStream input = null;
   byte[] buffer = new byte[outW * outH * 4];
@@ -333,6 +338,7 @@ void salvarJPG() {
   renderShapeLayer(exportLayer, semente, tempoFlutua, faseFolego);
 
   PGraphics jpgLayer = createGraphics(width, height, P2D);
+  jpgLayer.smooth(8);
   jpgLayer.beginDraw();
   jpgLayer.background(0);
   jpgLayer.image(exportLayer, 0, 0);

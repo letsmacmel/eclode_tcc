@@ -282,13 +282,13 @@ class MeshLogo {
     springs.clear();
     triangles.clear();
 
-    int longCells = constrain(round(max(mask.width, mask.height) / 11.5), 52, 142);
+    int longCells = constrain(round(max(mask.width, mask.height) / 7.0), 78, 260);
     if (mask.width >= mask.height) {
       cols = longCells;
-      rows = constrain(round(longCells * mask.height / float(mask.width)), 8, 92);
+      rows = constrain(round(longCells * mask.height / float(mask.width)), 12, 170);
     } else {
       rows = longCells;
-      cols = constrain(round(longCells * mask.width / float(mask.height)), 8, 92);
+      cols = constrain(round(longCells * mask.width / float(mask.height)), 12, 170);
     }
     cell = max(mask.width / float(max(1, cols)), mask.height / float(max(1, rows)));
     nodeIndex = new int[(cols + 1) * (rows + 1)];
@@ -298,8 +298,8 @@ class MeshLogo {
       for (int gx = 0; gx <= cols; gx++) {
         float u = map(gx, 0, cols, 0, mask.width - 1);
         float v = map(gy, 0, rows, 0, mask.height - 1);
-        if (!mask.sampleActive(u, v) && !nearActive(u, v, cell * 0.45)) continue;
-        boolean boundary = mask.sampleContour(u, v) || nearContour(u, v, cell * 0.60);
+        if (!mask.sampleActive(u, v) && !nearActive(u, v, cell * 0.85)) continue;
+        boolean boundary = mask.sampleContour(u, v) || nearContour(u, v, cell * 0.90);
         float x = u - mask.width * 0.5;
         float y = v - mask.height * 0.5;
         nodeIndex[gridIndex(gx, gy)] = nodes.size();
@@ -326,7 +326,7 @@ class MeshLogo {
         int d = nodeAt(gx, gy + 1);
         float cu = map(gx + 0.5, 0, cols, 0, mask.width - 1);
         float cv = map(gy + 0.5, 0, rows, 0, mask.height - 1);
-        if (!mask.sampleActive(cu, cv)) continue;
+        if (!cellHasVisibleShape(cu, cv, cell * 0.72)) continue;
         if (a >= 0 && b >= 0 && c >= 0) triangles.add(new MeshTriangle(a, b, c));
         if (a >= 0 && c >= 0 && d >= 0) triangles.add(new MeshTriangle(a, c, d));
       }
@@ -375,6 +375,17 @@ class MeshLogo {
     return false;
   }
 
+  boolean cellHasVisibleShape(float u, float v, float radius) {
+    int r = max(1, round(radius));
+    int step = max(1, r / 3);
+    for (int y = round(v) - r; y <= round(v) + r; y += step) {
+      for (int x = round(u) - r; x <= round(u) + r; x += step) {
+        if (mask.isActive(x, y)) return true;
+      }
+    }
+    return false;
+  }
+
   void reset() {
     for (int i = 0; i < nodes.size(); i++) nodes.get(i).reset();
   }
@@ -398,6 +409,20 @@ class MeshLogo {
     float springK = 0.050 + params.solidness * 0.075;
     float forceScale = params.deformationAmount * unit * constrain(params.intensity, 0, 2.0);
     float maxOffset = span * constrain(0.014 + params.displacementAmount * 0.00032 + smoothBass * 0.008, 0.012, 0.060);
+    boolean modoOriginal = params.mode == 0;
+    boolean modoExpande = params.mode == 12;
+    boolean modoEncolhe = params.mode == 13;
+    boolean modoMalha = params.mode == 14;
+    if (modoOriginal) {
+      forceScale = 0;
+      maxOffset = span * 0.004;
+    } else if (modoExpande) {
+      maxOffset = span * constrain(0.026 + smoothBass * 0.018 + smoothEnergy * 0.010, 0.020, 0.082);
+    } else if (modoEncolhe) {
+      maxOffset = span * constrain(0.020 + smoothBass * 0.014 + smoothEnergy * 0.008, 0.016, 0.065);
+    } else if (modoMalha) {
+      maxOffset = span * constrain(0.018 + params.displacementAmount * 0.00030 + smoothMid * 0.012, 0.016, 0.072);
+    }
 
     for (int i = 0; i < nodes.size(); i++) {
       MeshNode n = nodes.get(i);
@@ -421,6 +446,28 @@ class MeshLogo {
       float bassPush = smoothBass * forceScale * 0.0045 * lerp(0.18, 1.0, symbolMix);
       float midWave = smoothMid * forceScale * 0.0130 * wave * forceWeight * localGate;
       float trebleShake = smoothTreble * params.visualNoiseAmount * unit * (n.boundary ? lerp(0.42, 1.10, symbolMix) : 0.30) * sin(t * 24.0 + i * 0.29);
+
+      if (modoOriginal) {
+        bassPush = 0;
+        midWave = 0;
+        trebleShake = 0;
+      } else if (modoExpande) {
+        float textGrow = n.boundary ? 1.85 : 0.48;
+        float textBoost = lerp(1.42, 1.0, symbolMix);
+        bassPush = smoothBass * forceScale * 0.026 * textBoost * textGrow;
+        midWave = smoothMid * forceScale * 0.0038 * wave * lerp(0.20, 0.55, symbolMix);
+        trebleShake *= 0.35;
+      } else if (modoEncolhe) {
+        float textShrink = n.boundary ? 1.42 : 0.42;
+        float textBoost = lerp(1.28, 0.92, symbolMix);
+        bassPush = -smoothBass * forceScale * 0.020 * textBoost * textShrink;
+        midWave = smoothMid * forceScale * 0.0028 * wave * lerp(0.16, 0.42, symbolMix);
+        trebleShake *= 0.18;
+      } else if (modoMalha) {
+        bassPush *= 0.32;
+        midWave *= 1.12;
+        trebleShake *= 0.70;
+      }
 
       n.acceleration.x += radial.x * bassPush + cos(angle) * midWave + trebleShake * 0.18 * boundaryBoost;
       n.acceleration.y += radial.y * bassPush + sin(angle) * midWave + trebleShake * 0.13 * boundaryBoost;

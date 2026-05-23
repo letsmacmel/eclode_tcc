@@ -98,11 +98,11 @@ void desenharMenuLateral() {
   float panelInnerX = panelX + menuPadding;
   float trackWidth = max(96, menuWidth - (menuPadding * 2));
   float escalaUi = constrain(min(width, height) / 720.0, 0.70, 1.0);
-  float y = uiHeaderHeight + 12 * escalaUi - menuScrollY;
-  float buttonH = constrain(height * 0.039, 25, 34);
-  float sectionGap = 12 * escalaUi;
-  float labelSize = constrain(min(width, height) * 0.014, 8.8, 11.5);
-  float titleSize = constrain(min(width, height) * 0.022, 13.5, 19);
+  float y = uiHeaderHeight + 18 * escalaUi - menuScrollY;
+  float buttonH = constrain(height * 0.042, 28, 36);
+  float sectionGap = 14 * escalaUi;
+  float labelSize = constrain(min(width, height) * 0.0155, 10.5, 13.5);
+  float titleSize = constrain(min(width, height) * 0.024, 16, 21);
 
   desenharPainelBase(panelX, menuWidth, true);
   clip(panelX, 0, menuWidth, height);
@@ -394,12 +394,12 @@ float desenharTituloPainel(String titulo, float x, float y, float titleSize) {
   fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   textAlign(LEFT, TOP);
   float titleMaxW = (x > width * 0.5) ? painelPadraoWidth - menuPadding * 2 : menuWidth - menuPadding * 2;
-  float titleTextSize = tamanhoTextoParaCaber(titulo, titleSize, 11, titleMaxW);
+  float titleTextSize = tamanhoTextoParaCaber(titulo, titleSize, 13, titleMaxW);
   textSize(titleTextSize);
   text(textoComReticencias(titulo, titleMaxW, titleTextSize), x, y);
   fill(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN));
-  rect(x, y + titleTextSize + 9, 28, 2, 2);
-  return y + titleTextSize + 34;
+  rect(x, y + titleTextSize + 10, 34, 2, 2);
+  return y + titleTextSize + 30;
 }
 
 float desenharSecaoLabel(String label, float x, float y, float labelSize) {
@@ -409,13 +409,13 @@ float desenharSecaoLabel(String label, float x, float y, float labelSize) {
   strokeWeight(1);
   line(x, y, x + sectionW, y);
   noStroke();
-  y += 13;
+  y += 11;
   fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED));
   textAlign(LEFT, TOP);
-  float sectionTextSize = tamanhoTextoParaCaber(label, constrain(labelSize * 1.28, 11.5, 14.5), 9.5, sectionW);
+  float sectionTextSize = tamanhoTextoParaCaber(label, constrain(labelSize * 1.22, 13, 16), 11, sectionW);
   textSize(sectionTextSize);
   text(textoComReticencias(label, sectionW, sectionTextSize), x, y);
-  return y + sectionTextSize + 30;
+  return y + sectionTextSize + 22;
 }
 
 float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, float labelSize, float titleSize) {
@@ -445,6 +445,13 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   desenharBotaoAcao(loadImageBrandButton, "Carregar PNG/JPG");
   y += buttonH + 8;
 
+  brandToggleButton[0] = x;
+  brandToggleButton[1] = y;
+  brandToggleButton[2] = w;
+  brandToggleButton[3] = buttonH;
+  desenharBotaoAcaoEstado(brandToggleButton, brandSystemEnabled ? "SISTEMA LIGADO" : "SISTEMA DESLIGADO", brandSystemEnabled);
+  y += buttonH + 12;
+
   fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 185);
   textAlign(LEFT, TOP);
   textSize(constrain(height * 0.014, 10, 12));
@@ -473,13 +480,6 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   desenharBotaoAcaoEstado(freezeBrandButton, mutationParams != null && mutationParams.freezeState ? "CONGELADO" : "CONGELAR", mutationParams != null && mutationParams.freezeState);
   y += buttonH + 8;
 
-  brandToggleButton[0] = x;
-  brandToggleButton[1] = y;
-  brandToggleButton[2] = w;
-  brandToggleButton[3] = buttonH;
-  desenharBotaoAcaoEstado(brandToggleButton, brandSystemEnabled ? "SISTEMA LIGADO" : "SISTEMA DESLIGADO", brandSystemEnabled);
-  y += buttonH + 16;
-
   float gap = max(5, 8 * constrain(w / 220.0, 0.70, 1.0));
   float bh = constrain(height * 0.038, 24, 32);
   int buttonCols = w < 190 ? 1 : 2;
@@ -496,19 +496,36 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   desenharSliderGenerico(pointDensitySlider, "Quantidade", 0);
   y += 54;
 
-  y = desenharSecaoLabel("Camada visual", x, y, labelSize);
-  for (int i = 0; i < mutationModeButtons.length; i++) {
-    int col = i % buttonCols;
-    int row = i / buttonCols;
+  y = desenharSecaoLabel("Marca base", x, y, labelSize);
+  int[] baseModes = { 0, 12, 13, 14 };
+  for (int k = 0; k < baseModes.length; k++) {
+    int i = baseModes[k];
+    int col = k % buttonCols;
+    int row = k / buttonCols;
     mutationModeButtons[i][0] = x + col * (bw + gap);
     mutationModeButtons[i][1] = y + row * (bh + gap);
-    boolean ultimoSozinho = (buttonCols == 2 && mutationModeButtons.length % 2 == 1) && i == mutationModeButtons.length - 1;
+    mutationModeButtons[i][2] = bw;
+    mutationModeButtons[i][3] = bh;
+    boolean ativo = mutationParams != null && mutationParams.mode == i;
+    desenharBotaoAcaoEstado(mutationModeButtons[i], mutationModeLabels[i], ativo);
+  }
+  int baseRows = ceil(baseModes.length / float(buttonCols));
+  y += (bh + gap) * baseRows + 20;
+
+  y = desenharSecaoLabel("Camadas generativas", x, y, labelSize);
+  for (int i = 1; i <= 11; i++) {
+    int k = i - 1;
+    int col = k % buttonCols;
+    int row = k / buttonCols;
+    mutationModeButtons[i][0] = x + col * (bw + gap);
+    mutationModeButtons[i][1] = y + row * (bh + gap);
+    boolean ultimoSozinho = (buttonCols == 2 && 11 % 2 == 1) && i == 11;
     mutationModeButtons[i][2] = ultimoSozinho ? w : bw;
     mutationModeButtons[i][3] = bh;
     boolean ativo = mutationParams != null && mutationParams.mode == i;
     desenharBotaoAcaoEstado(mutationModeButtons[i], mutationModeLabels[i], ativo);
   }
-  int visualBaseRows = ceil(mutationModeButtons.length / float(buttonCols));
+  int visualBaseRows = ceil(11 / float(buttonCols));
   y += (bh + gap) * visualBaseRows + 14;
 
   y = desenharSecaoLabel("Comportamento sonoro", x, y, labelSize);
@@ -524,42 +541,6 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   }
   int deformationRows = ceil(deformationModeButtons.length / float(buttonCols));
   return y + (bh + gap) * deformationRows + 14;
-/*
-
-  y = desenharSecaoLabel("Sensibilidade das frequências", x, y, labelSize);
-  for (int i = 0; i < frequencyInfluenceSliders.length; i++) {
-    float val = 1.0;
-    if (mutationParams != null) {
-      if (i == 0) val = mutationParams.bassInfluence;
-      if (i == 1) val = mutationParams.midInfluence;
-      if (i == 2) val = mutationParams.trebleInfluence;
-      if (i == 3) val = mutationParams.solidness;
-    }
-    frequencyInfluenceSliders[i][0] = x;
-    frequencyInfluenceSliders[i][1] = y + 18;
-    frequencyInfluenceSliders[i][2] = w;
-    frequencyInfluenceSliders[i][3] = 0.0;
-    frequencyInfluenceSliders[i][4] = i == 3 ? 1.0 : 2.0;
-    frequencyInfluenceSliders[i][5] = val;
-    desenharSliderLinha(frequencyInfluenceLabels[i], frequencyInfluenceSliders[i], val);
-    y += 44;
-  }
-  y += 8;
-
-  y = desenharTituloPainel("Aparência da marca", x, y, titleSize);
-
-  y = desenharSecaoLabel("Paleta de cor", x, y, labelSize);
-  for (int i = 0; i < paletteButtons.length; i++) {
-    int col = i % 2;
-    int row = i / 2;
-    paletteButtons[i][0] = x + col * (bw + gap);
-    paletteButtons[i][1] = y + row * (bh + gap);
-    paletteButtons[i][2] = bw;
-    paletteButtons[i][3] = bh;
-    desenharBotaoAcao(paletteButtons[i], paletteLabels[i]);
-  }
-  return y + (bh + gap) * 2 + 18;
-*/
 }
 
 float desenharAudioMetersDesign(float x, float y, float w, float labelSize) {
@@ -616,31 +597,40 @@ float desenharPainelPanfletoEsquerdo(float x, float y, float w, float buttonH, f
   panfletoExportMp4Button[2] = w;
   panfletoExportMp4Button[3] = buttonH;
   desenharBotaoAcao(panfletoExportMp4Button, "Exportar MP4 10s");
-  y += buttonH + 18;
+  y += buttonH + 16;
 
   y = desenharSecaoLabel("Estado", x, y, labelSize);
 
-  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 190);
-  textAlign(LEFT, TOP);
-  textSize(labelSize + 1);
-  text("Formato: " + panfletoFormatoLabels[panfletoFormatoAtivo], x, y);
-  y += 24;
-  text("Layout: " + panfletoLayoutLabels[panfletoLayoutAtivo], x, y);
-  y += 24;
-  text("Fundo: " + hexMarca(corFundoPanfletoAtual()), x, y);
-  y += 24;
-  text("Foto: " + (panfletoFoto != null ? "carregada" : "nenhuma"), x, y);
-  y += 34;
+  y = desenharInfoCompacta("Formato", panfletoFormatoLabels[panfletoFormatoAtivo], x, y, w);
+  y = desenharInfoCompacta("Layout", panfletoLayoutLabels[panfletoLayoutAtivo], x, y, w);
+  y = desenharInfoCompacta("Fundo", hexMarca(corFundoPanfletoAtual()), x, y, w);
+  y = desenharInfoCompacta("Foto", panfletoFoto != null ? "carregada" : "nenhuma", x, y, w);
+  y += 10;
 
   y = desenharSecaoLabel("Aplicação", x, y, labelSize);
-  text("Posição: " + nf(panfletoMarcaX, 0, 0) + " / " + nf(panfletoMarcaY, 0, 0), x, y);
-  y += 24;
-  text("Tamanho: " + nf(panfletoMarcaEscala, 0, 2), x, y);
-  y += 24;
-  text("Textos: " + (panfletoMostrarTextos ? "ligados" : "desligados"), x, y);
-  y += 24;
-  text("Símbolo: " + (panfletoMostrarSimbolo ? "ligado" : "desligado"), x, y);
-  return y + 22;
+  y = desenharInfoCompacta("Posição", nf(panfletoMarcaX, 0, 0) + " / " + nf(panfletoMarcaY, 0, 0), x, y, w);
+  y = desenharInfoCompacta("Tamanho", nf(panfletoMarcaEscala, 0, 2), x, y, w);
+  y = desenharInfoCompacta("Textos", panfletoMostrarTextos ? "ligados" : "desligados", x, y, w);
+  y = desenharInfoCompacta("Símbolo", panfletoMostrarSimbolo ? "ligado" : "desligado", x, y, w);
+  return y + 12;
+}
+
+float desenharInfoCompacta(String rotulo, String valor, float x, float y, float w) {
+  float h = constrain(height * 0.032, 22, 28);
+  noStroke();
+  fill(red(UI_PANEL_SOFT), green(UI_PANEL_SOFT), blue(UI_PANEL_SOFT), 150);
+  rect(x, y, w, h, 5);
+  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 160);
+  textAlign(LEFT, CENTER);
+  float labelSize = constrain(height * 0.0125, 9.5, 11);
+  textSize(labelSize);
+  text(textoComReticencias(rotulo, w * 0.36, labelSize), x + 9, y + h * 0.5);
+  fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT), 224);
+  textAlign(RIGHT, CENTER);
+  float valorSize = tamanhoTextoParaCaber(valor, constrain(height * 0.0128, 9.8, 11.3), 7.5, w * 0.58);
+  textSize(valorSize);
+  text(textoComReticencias(valor, w * 0.58, valorSize), x + w - 9, y + h * 0.5);
+  return y + h + 6;
 }
 
 float desenharPainelEstampaEsquerdo(float x, float y, float w, float buttonH, float labelSize, float titleSize) {
@@ -717,6 +707,13 @@ float desenharPainelEstampaEsquerdo(float x, float y, float w, float buttonH, fl
 
 float desenharPainelExportEsquerdo(float x, float y, float w, float buttonH, float labelSize, float titleSize) {
   y = desenharTituloPainel("Exportação", x, y, titleSize);
+  freezeBrandButton[0] = x;
+  freezeBrandButton[1] = y;
+  freezeBrandButton[2] = w;
+  freezeBrandButton[3] = buttonH;
+  desenharBotaoAcaoEstado(freezeBrandButton, mutationParams != null && mutationParams.freezeState ? "CONGELADO" : "CONGELAR MARCA", mutationParams != null && mutationParams.freezeState);
+  y += buttonH + 16;
+
   y = desenharSecaoLabel("Exportar", x, y, labelSize);
   for (int i = 0; i < exportPageButtons.length; i++) {
     exportPageButtons[i][0] = x;
@@ -747,10 +744,10 @@ void desenharMenuPadroes() {
   float innerX = panelX + pad;
   float trackWidth = max(96, painelPadraoWidth - (pad * 2));
   float escalaUi = constrain(min(width, height) / 720.0, 0.70, 1.0);
-  float y = uiHeaderHeight + 12 * escalaUi - painelPadraoScrollY;
-  float buttonH = constrain(height * 0.039, 25, 34);
-  float labelSize = constrain(min(width, height) * 0.014, 8.8, 11.5);
-  float titleSize = constrain(min(width, height) * 0.021, 13, 17.5);
+  float y = uiHeaderHeight + 18 * escalaUi - painelPadraoScrollY;
+  float buttonH = constrain(height * 0.042, 28, 36);
+  float labelSize = constrain(min(width, height) * 0.0155, 10.5, 13.5);
+  float titleSize = constrain(min(width, height) * 0.024, 16, 21);
 
   desenharPainelBase(panelX, painelPadraoWidth, false);
   clip(panelX, 0, painelPadraoWidth, height);
@@ -1268,21 +1265,17 @@ void zerarSliderDesign(int idx) {
 }
 
 float desenharPainelExportDireito(float x, float y, float w, float buttonH, float labelSize, float titleSize) {
-  y = desenharTituloPainel("O que levar", x, y, titleSize);
-  y = desenharSecaoLabel("Módulos de saída", x, y, labelSize);
-  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 185);
-  textAlign(LEFT, TOP);
-  textSize(constrain(height * 0.015, 11, 13));
-  text("Panfleto: layout editorial gerado com a identidade.", x, y, w, 54);
-  y += 56;
-  text("Estampa: superfície/padrão derivado da identidade.", x, y, w, 54);
-  y += 56;
-  text("Exportar: SVG, PNG, JPG ou MP4 do canvas central.", x, y, w, 54);
-  y += 56;
-  y = desenharSecaoLabel("Embed / API", x, y, labelSize);
-  fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 145);
-  text("Módulo previsto para live stream, ainda não implementado nesta versão.", x, y, w, 90);
-  return y + 100;
+  y = desenharTituloPainel("Resumo", x, y, titleSize);
+  y = desenharSecaoLabel("Canvas atual", x, y, labelSize);
+  String modulo = appPage == 2 ? "Panfleto" : (appPage == 3 ? "Estampa" : "Marca");
+  y = desenharInfoCompacta("Módulo", modulo, x, y, w);
+  y = desenharInfoCompacta("Formato", appPage == 2 ? panfletoFormatoLabels[panfletoFormatoAtivo] : nf(width, 0, 0) + "x" + nf(height, 0, 0), x, y, w);
+  y = desenharInfoCompacta("Marca", activeBrand != null ? activeBrand.name : "nenhuma", x, y, w);
+  y += 12;
+  y = desenharSecaoLabel("Estado", x, y, labelSize);
+  y = desenharInfoCompacta("Congelamento", mutationParams != null && mutationParams.freezeState ? "ativo" : "livre", x, y, w);
+  y = desenharInfoCompacta("MP4", videoRecording ? "capturando" : (videoEncoding ? "gerando" : "pronto"), x, y, w);
+  return y + 24;
 }
 
 float desenharPainelEstampaDireito(float x, float y, float w, float buttonH, float labelSize, float titleSize) {
@@ -1390,10 +1383,10 @@ void desenharFaixaCorEstampa(int tipo, float[] s, float hueBase, float satBase) 
   float sy = s[1] + 6;
   float sw = max(24, s[2] - 64);
   float t = constrain((s[5] - s[3]) / max(0.0001, s[4] - s[3]), 0, 1);
-  if (tipo == 0) desenharFaixaMatiz(sx, sy, sw, 5);
-  if (tipo == 1) desenharFaixaSaturacao(sx, sy, sw, 5, hueBase, 100);
-  if (tipo == 2) desenharFaixaLuminosidade(sx, sy, sw, 5, hueBase, satBase);
-  if (tipo == 3) desenharFaixaAlpha(sx, sy, sw, 5, hueBase, satBase, estampaHsvSliders[2][5]);
+  if (tipo == 0) desenharFaixaMatizCompleta(sx, sy, sw, 5);
+  if (tipo == 1) desenharFaixaSaturacaoCompleta(sx, sy, sw, 5, hueBase, 100);
+  if (tipo == 2) desenharFaixaLuminosidadeCompleta(sx, sy, sw, 5, hueBase, satBase);
+  if (tipo == 3) desenharFaixaAlphaCompleta(sx, sy, sw, 5, hueBase, satBase, estampaHsvSliders[2][5]);
   noStroke();
   fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   ellipse(sx + sw * t, sy + 2.5, 11, 11);
@@ -1401,29 +1394,29 @@ void desenharFaixaCorEstampa(int tipo, float[] s, float hueBase, float satBase) 
 
 void desenharSliderUi(float sx, float sy, float sw, float mn, float mx, float val, String label, int decimals) {
   float t = constrain((val - mn) / max(0.0001, mx - mn), 0, 1);
-  float valueW = 54;
+  float valueW = 58;
   float trackY = sy + 8;
-  float trackW = max(24, sw - valueW - 10);
+  float trackW = max(24, sw - valueW - 12);
   boolean hover = mouseX >= sx && mouseX <= sx + trackW && mouseY >= trackY - 8 && mouseY <= trackY + 12;
 
   fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED));
   textAlign(LEFT, TOP);
-  float sliderLabelSize = tamanhoTextoParaCaber(label, constrain(height * 0.0118, 8.5, 10.5), 7, trackW);
+  float sliderLabelSize = tamanhoTextoParaCaber(label, constrain(height * 0.0132, 9.5, 11.5), 8, trackW);
   textSize(sliderLabelSize);
   text(textoComReticencias(label, trackW, sliderLabelSize), sx, sy - 15);
 
   fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT), 220);
   textAlign(RIGHT, TOP);
-  textSize(constrain(height * 0.0118, 8.5, 10.5));
+  textSize(constrain(height * 0.0128, 9.3, 11.2));
   text(nf(val, 1, decimals), sx + sw, sy - 15);
 
   noStroke();
   fill(red(UI_DARK), green(UI_DARK), blue(UI_DARK));
-  rect(sx, trackY, trackW, 6, 3);
+  rect(sx, trackY, trackW, 7, 3);
   fill(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN), hover ? 245 : 210);
-  rect(sx, trackY, trackW * t, 6, 3);
+  rect(sx, trackY, trackW * t, 7, 3);
   fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
-  ellipse(sx + trackW * t, trackY + 3, hover ? 12 : 10, hover ? 12 : 10);
+  ellipse(sx + trackW * t, trackY + 3.5, hover ? 13 : 11, hover ? 13 : 11);
 }
 
 void desenharSliderGenerico(float[] s, String label, int decimals) {
@@ -1463,22 +1456,24 @@ void desenharColorPicker() {
   colorPickerArea[2] = boxW - 36;
   colorPickerArea[3] = boxH - 150;
 
-  int cols = 4;
-  int rows = 2;
+  int cols = 32;
+  int rows = 22;
   float cw = colorPickerArea[2] / cols;
   float ch = colorPickerArea[3] / rows;
   noStroke();
   for (int gy = 0; gy < rows; gy++) {
     for (int gx = 0; gx < cols; gx++) {
-      int c = corInterfacePaleta(gx);
-      fill(red(c), green(c), blue(c), gy == 0 ? 255 : 145);
+      float s = gx / float(max(1, cols - 1));
+      float b = 1.0 - gy / float(max(1, rows - 1));
+      int c = java.awt.Color.HSBtoRGB(colorPickerHue, s, b);
+      fill((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
       rect(colorPickerArea[0] + gx * cw, colorPickerArea[1] + gy * ch, cw + 0.5, ch + 0.5);
     }
   }
   stroke(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   strokeWeight(1.5);
-  float pickX = colorPickerArea[0] + (floor(constrain(colorPickerHue, 0, 0.9999) * 4.0) + 0.5) * cw;
-  float pickY = colorPickerArea[1] + colorPickerArea[3] * 0.25;
+  float pickX = colorPickerArea[0] + colorPickerSat * colorPickerArea[2];
+  float pickY = colorPickerArea[1] + (1.0 - colorPickerBri) * colorPickerArea[3];
   noFill();
   ellipse(pickX, pickY, 12, 12);
 
@@ -1487,16 +1482,17 @@ void desenharColorPicker() {
   colorPickerHueArea[2] = boxW - 36;
   colorPickerHueArea[3] = 18;
   noStroke();
-  for (int i = 0; i < 4; i++) {
-    int c = corInterfacePaleta(i);
-    fill(red(c), green(c), blue(c));
-    rect(colorPickerHueArea[0] + i * colorPickerHueArea[2] / 4.0, colorPickerHueArea[1], colorPickerHueArea[2] / 4.0 + 1, colorPickerHueArea[3]);
+  for (int i = 0; i < 96; i++) {
+    float h = i / 95.0;
+    int c = java.awt.Color.HSBtoRGB(h, 1, 1);
+    fill((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
+    rect(colorPickerHueArea[0] + i * colorPickerHueArea[2] / 96.0, colorPickerHueArea[1], colorPickerHueArea[2] / 96.0 + 1, colorPickerHueArea[3]);
   }
   fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   rect(colorPickerHueArea[0] + colorPickerHue * colorPickerHueArea[2] - 1, colorPickerHueArea[1] - 3, 2, colorPickerHueArea[3] + 6);
 
-  int preview = corInterfacePaletaPorT(colorPickerHue);
-  fill(red(preview), green(preview), blue(preview));
+  int preview = java.awt.Color.HSBtoRGB(colorPickerHue, colorPickerSat, colorPickerBri);
+  fill((preview >> 16) & 0xFF, (preview >> 8) & 0xFF, preview & 0xFF);
   rect(boxX + 18, boxY + boxH - 56, 54, 34, 5);
 
   colorPickerCancelButton[0] = boxX + boxW - 178;
@@ -1913,8 +1909,8 @@ void desenharSliderPanfletoTexto(int idx) {
 void desenharScrollPadrao(float panelX, float maxScroll) {
   if (maxScroll <= 1) return;
 
-  float trackY = uiHeaderHeight + 12;
-  float trackH = height - trackY - 12;
+  float trackY = uiHeaderHeight + 18;
+  float trackH = height - trackY - 18;
   float thumbH = max(36, trackH * (height / (height + maxScroll)));
   float thumbY = trackY + (trackH - thumbH) * (painelPadraoScrollY / maxScroll);
 
@@ -1942,16 +1938,16 @@ void desenharBotaoAcaoEstado(float[] buttonData, String label, boolean ativo) {
   } else {
     fill(red(UI_PANEL_SOFT), green(UI_PANEL_SOFT), blue(UI_PANEL_SOFT), 232);
   }
-  rect(buttonData[0], buttonData[1], buttonData[2], buttonData[3], 6);
+  rect(buttonData[0], buttonData[1], buttonData[2], buttonData[3], 5);
   if (ativo) {
     noStroke();
     fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT), 190);
-    rect(buttonData[0] + 1, buttonData[1] + 1, 3, buttonData[3] - 2, 5);
+    rect(buttonData[0] + 1, buttonData[1] + 1, 3, buttonData[3] - 2, 4);
   }
   noStroke();
   if (ativo || hover) fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   else fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED));
-  textoCentralizadoAjustado(label, buttonData[0] + buttonData[2] * 0.5, buttonData[1] + buttonData[3] * 0.5, max(20, buttonData[2] - 10), constrain(height * 0.0122, 8.0, 10.2), 5.6);
+  textoCentralizadoAjustado(label, buttonData[0] + buttonData[2] * 0.5, buttonData[1] + buttonData[3] * 0.5, max(20, buttonData[2] - 12), constrain(height * 0.0138, 9.5, 11.8), 7.0);
 }
 
 void desenharCabecalhoGrupo(int groupIdx) {

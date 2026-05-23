@@ -115,8 +115,8 @@ float[] resetBrandButton = new float[4];
 float[] freezeBrandButton = new float[4];
 float[] exportPngButton = new float[4];
 float[] brandToggleButton = new float[4];
-float[][] mutationModeButtons = new float[12][4];
-String[] mutationModeLabels = { "ORIGINAL", "MASSA", "PONTOS", "LINHAS", "PARTÍCULAS", "GRID", "ECO", "PERLIN", "AREIA", "PELÚCIA", "FIOS", "DIFUSÃO" };
+float[][] mutationModeButtons = new float[15][4];
+String[] mutationModeLabels = { "ORIGINAL", "MASSA", "PONTOS", "LINHAS", "PARTÍCULAS", "GRID", "ECO", "PERLIN", "AREIA", "PELÚCIA", "FIOS", "DIFUSÃO", "EXPANDE", "ENCOLHE", "MALHA" };
 float[][] rdA, rdB, rdNextA, rdNextB, rdMask;
 int rdCols = 0, rdRows = 0, rdBrandSignature = -1;
 float rdMinX = 0, rdMinY = 0, rdMaxX = 0, rdMaxY = 0, rdComplexityKey = -1;
@@ -191,9 +191,10 @@ String[] estampaModoLabels = {
   "Ritmo Min.", "Diagonal Frag.", "Malha Geo.",
   "Campo Diag.", "Grade Compr.", "Zig Zag",
   "Angular Disp.", "Expansão", "Ruído Modular",
-  "Barras Disp.", "Linhas Dados", "Labirinto"
+  "Barras Disp.", "Linhas Dados", "Labirinto",
+  "Grad. Malha", "Topografia", "Fluxo Org."
 };
-float[][] padraoFormaButtons = new float[24][4];
+float[][] padraoFormaButtons = new float[27][4];
 String[] padraoFormaLabels = {
   "Pixel", "Comp. V", "Óptica",
   "Barras", "Losango", "Comp. R",
@@ -202,7 +203,8 @@ String[] padraoFormaLabels = {
   "Min.", "Diag.", "Geo.",
   "Cinético", "Módulo", "ZigZag",
   "Disperso", "Expande", "Ruído",
-  "Barras 2", "Dados", "Labirinto"
+  "Barras 2", "Dados", "Labirinto",
+  "Grad.", "Topo.", "Fluxo"
 };
 int formaPadraoAtiva = 0;
 float[][] estampaPreviewButtons = new float[4][4];
@@ -576,7 +578,7 @@ void setup() {
   surface.setResizable(true);
   surface.setSize(1100, 680);
   pixelDensity(1);
-  smooth(4);
+  smooth(8);
   colorMode(HSB, 360, 100, 100, 100);
   frameRate(exportFrameRate);
 

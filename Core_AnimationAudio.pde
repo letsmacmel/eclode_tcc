@@ -36,6 +36,7 @@ void atualizarLayout() {
 
   if (exportLayer == null || exportLayer.width != width || exportLayer.height != height) {
     exportLayer = createGraphics(width, height, P2D);
+    exportLayer.smooth(8);
   }
 
   if (videoRecording) {
@@ -48,6 +49,7 @@ void garantirVideoLayer() {
   int targetVideoHeight = max(height * exportScale, 720);
   if (videoLayer == null || videoLayer.width != targetVideoWidth || videoLayer.height != targetVideoHeight) {
     videoLayer = createGraphics(targetVideoWidth, targetVideoHeight, P2D);
+    videoLayer.smooth(8);
     videoFrameBuffer = new byte[targetVideoWidth * targetVideoHeight * 4];
   }
 }

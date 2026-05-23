@@ -29,12 +29,12 @@ void carregarMarcaSVG() {
 
   File arquivoAbsoluto = new File(caminhoMarcaSVG);
   if (caminhoMarcaSVG != null && caminhoMarcaSVG.length() > 0 && arquivoAbsoluto.exists()) {
-    marcaSVG = loadShape(caminhoMarcaSVG);
+    marcaSVG = carregarShapeComPrecisao(caminhoMarcaSVG);
   } else {
     String caminhoLocal = sketchPath("logo.svg");
     File arquivoLocal = new File(caminhoLocal);
     if (arquivoLocal.exists()) {
-      marcaSVG = loadShape(caminhoLocal);
+      marcaSVG = carregarShapeComPrecisao(caminhoLocal);
     }
   }
 
@@ -57,6 +57,7 @@ void construirMarcaRaster() {
   int rw = 1800;
   int rh = (int) (rw / ratio);
   PGraphics rasterPg = createGraphics(rw, rh, P2D);
+  rasterPg.smooth(8);
   rasterPg.beginDraw();
   rasterPg.clear();
   rasterPg.shapeMode(CENTER);
@@ -358,15 +359,15 @@ boolean carregarMarcaDireta(File selection) {
     PShape shape = null;
     String caminhoImportado = importarArquivoParaSketch(selection, "brand_svg");
     if (caminhoImportado != null) {
-      shape = loadShape(caminhoImportado);
-      if (shape == null) shape = loadShape(dataPath(caminhoImportado));
+      shape = carregarShapeComPrecisao(caminhoImportado);
+      if (shape == null) shape = carregarShapeComPrecisao(dataPath(caminhoImportado));
     }
     if (shape == null) {
       String uri = "file:///" + caminhoOriginal.replace("\\", "/");
       shape = loadShape(uri);
     }
     if (shape == null) {
-      shape = loadShape(caminhoOriginal);
+      shape = carregarShapeComPrecisao(caminhoOriginal);
     }
 
     if (shape != null) {
@@ -416,7 +417,8 @@ PImage rasterizarShapeComoImagem(PShape shape) {
     int rh = max(32, ceil(sh * scale) + 8);
 
     // JAVA2D evita o erro GL 0x502 que acontece ao criar buffers P2D durante o load.
-   PGraphics pg = createGraphics(rw, rh);
+    PGraphics pg = createGraphics(rw, rh, P2D);
+    pg.smooth(8);
     pg.beginDraw();
     pg.clear();
     pg.colorMode(RGB, 255, 255, 255, 255);
@@ -437,6 +439,58 @@ PImage rasterizarShapeComoImagem(PShape shape) {
   } catch (Exception e) {
     println("Falha ao rasterizar SVG: " + e.getMessage());
     return null;
+  }
+}
+
+PShape carregarShapeComPrecisao(String caminho) {
+  String preciso = prepararSVGComPrecisao(caminho);
+  PShape shape = null;
+  if (preciso != null && preciso.length() > 0) shape = loadShape(preciso);
+  if (shape == null) shape = loadShape(caminho);
+  return shape;
+}
+
+String prepararSVGComPrecisao(String caminho) {
+  if (caminho == null || caminho.length() == 0) return caminho;
+  String lower = caminho.toLowerCase();
+  if (!lower.endsWith(".svg")) return caminho;
+
+  File origem = new File(caminho);
+  if (!origem.isAbsolute()) {
+    File dataFile = new File(dataPath(caminho));
+    File sketchFile = new File(sketchPath(caminho));
+    if (dataFile.exists()) origem = dataFile;
+    else if (sketchFile.exists()) origem = sketchFile;
+  }
+  if (!origem.exists()) return caminho;
+
+  try {
+    String[] linhas = loadStrings(origem.getAbsolutePath());
+    if (linhas == null || linhas.length == 0) return caminho;
+    String conteudo = join(linhas, "\n");
+    int start = conteudo.indexOf("<svg");
+    if (start < 0) return caminho;
+    int end = conteudo.indexOf(">", start);
+    if (end < 0) return caminho;
+
+    String tag = conteudo.substring(start, end);
+    String extra = "";
+    if (tag.indexOf("shape-rendering") < 0) extra += " shape-rendering=\"geometricPrecision\"";
+    if (tag.indexOf("text-rendering") < 0) extra += " text-rendering=\"geometricPrecision\"";
+    if (tag.indexOf("image-rendering") < 0) extra += " image-rendering=\"optimizeQuality\"";
+    if (tag.indexOf("color-rendering") < 0) extra += " color-rendering=\"optimizeQuality\"";
+    if (extra.length() == 0) return origem.getAbsolutePath();
+
+    conteudo = conteudo.substring(0, end) + extra + conteudo.substring(end);
+    File pasta = new File(dataPath("imports"));
+    if (!pasta.exists()) pasta.mkdirs();
+    String nomeSeguro = origem.getName().replaceAll("[^A-Za-z0-9_.-]", "_");
+    File destino = new File(pasta, "precision_" + abs(origem.getAbsolutePath().hashCode()) + "_" + nomeSeguro);
+    saveStrings(destino.getAbsolutePath(), split(conteudo, "\n"));
+    return destino.getAbsolutePath();
+  } catch (Exception e) {
+    println("Falha ao preparar SVG com geometricPrecision: " + e.getMessage());
+    return caminho;
   }
 }
 
@@ -1086,11 +1140,11 @@ class MutableBrand {
   PVector center = new PVector();
 
   boolean loadSVG(String filename) {
-    PShape svg = loadShape(filename);
+    PShape svg = carregarShapeComPrecisao(filename);
     if (svg == null) {
       File arquivo = new File(filename);
       if (!arquivo.isAbsolute()) {
-        svg = loadShape(dataPath(filename));
+        svg = carregarShapeComPrecisao(dataPath(filename));
       }
     }
     if (svg == null) {
@@ -1404,6 +1458,7 @@ class MutableBrand {
     int mh = max(32, ceil(sh * maskScale) + 4);
 
     PGraphics mask = createGraphics(mw, mh, P2D);
+    mask.smooth(8);
     mask.beginDraw();
     mask.clear();
     mask.shapeMode(CORNER);
@@ -1548,6 +1603,16 @@ class MutableBrand {
     if (params.mode == 0) {
       targetScale = baseScale;
       targetRotation *= 0.18;
+    } else if (params.mode == 12) {
+      targetScale = baseScale + (bassDrive * 0.010 + audio.volume * 0.006) * constrain(params.intensity, 0, 2.0);
+      targetRotation *= 0.10;
+    } else if (params.mode == 13) {
+      targetScale = baseScale - (bassDrive * 0.008 + audio.volume * 0.005) * constrain(params.intensity, 0, 2.0);
+      targetScale = max(baseScale * 0.965, targetScale);
+      targetRotation *= 0.08;
+    } else if (params.mode == 14) {
+      targetScale = baseScale + midDrive * params.scaleAmount * 0.10;
+      targetRotation *= 0.16;
     }
     float speedMul = max(0.1, params.transformSpeed);
     float lerpSpeed = (drive > 0.01 ? params.growthSpeed : params.returnSpeed) * speedMul;

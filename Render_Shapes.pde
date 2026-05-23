@@ -294,6 +294,20 @@ void desenharSistemaEstampaOrganica(PGraphics pg, float x, float y, float w, flo
   float cx = x + w * 0.5 + padraoRefX * scaleBase;
   float cy = y + h * 0.5 + padraoRefY * scaleBase;
 
+  if (modo == 24) {
+    desenharPadraoGradienteMalha(pg, x, y, w, h, density, baseStep, seedValue, t, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca);
+    desenharGranulacaoEstampa(pg, x, y, w, h, density, seedValue, t);
+    return;
+  } else if (modo == 25) {
+    desenharPadraoTopograficoOrganico(pg, x, y, w, h, density, baseStep, seedValue, t, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca);
+    desenharGranulacaoEstampa(pg, x, y, w, h, density, seedValue, t);
+    return;
+  } else if (modo == 26) {
+    desenharPadraoFluxoOrganico(pg, x, y, w, h, density, baseStep, seedValue, t, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca);
+    desenharGranulacaoEstampa(pg, x, y, w, h, density, seedValue, t);
+    return;
+  }
+
   if (modo >= 0 && modo < 24) {
     desenharPadraoEditorialModular(pg, x, y, w, h, modo, density, baseStep, seedValue, t, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca);
     desenharGranulacaoEstampa(pg, x, y, w, h, density, seedValue, t);
@@ -346,6 +360,192 @@ void desenharPadraoEditorialModular(PGraphics pg, float x, float y, float w, flo
   } else {
     desenharEstampaDadosLabirinto(pg, x, y, w, h, variante, density, t, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca, dnaPeso);
   }
+}
+
+void desenharPadraoGradienteMalha(PGraphics pg, float x, float y, float w, float h, int density, float baseStep, float seedValue, float t, float energy, float bass, float mid, float treble, float ar, float ag, float ab, float br, float bg, float bb, MutableBrand brand, boolean temMarca) {
+  float bleed = max(18, min(w, h) * 0.075);
+  int gw = max(8, ceil(w));
+  int gh = max(8, ceil(h));
+  PGraphics gradiente = createGraphics(gw, gh, P2D);
+  gradiente.smooth(8);
+  gradiente.beginDraw();
+  gradiente.clear();
+  gradiente.colorMode(RGB, 255, 255, 255, 255);
+
+  float mx = -bleed;
+  float my = -bleed;
+  float mw = gw + bleed * 2.0;
+  float mh = gh + bleed * 2.0;
+  int cols = constrain(round(mw / max(10, baseStep * 0.16)) + density, 78, 152);
+  int rows = constrain(round(mh / max(10, baseStep * 0.16)) + density, 70, 144);
+  float tempo = t * (0.34 + treble * 0.08);
+  float deform = min(w, h) * (0.010 + energy * 0.012 + mid * 0.010);
+  float vib = min(w, h) * treble * 0.0028;
+  int kernelCount = 4;
+
+  gradiente.noStroke();
+  gradiente.beginShape(QUADS);
+  for (int gy = 0; gy < rows; gy++) {
+    for (int gx = 0; gx < cols; gx++) {
+      desenharVerticeGradienteMalha(gradiente, mx, my, mw, mh, gx, gy, cols, rows, seedValue, tempo, deform, vib, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca, kernelCount);
+      desenharVerticeGradienteMalha(gradiente, mx, my, mw, mh, gx + 1, gy, cols, rows, seedValue, tempo, deform, vib, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca, kernelCount);
+      desenharVerticeGradienteMalha(gradiente, mx, my, mw, mh, gx + 1, gy + 1, cols, rows, seedValue, tempo, deform, vib, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca, kernelCount);
+      desenharVerticeGradienteMalha(gradiente, mx, my, mw, mh, gx, gy + 1, cols, rows, seedValue, tempo, deform, vib, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca, kernelCount);
+    }
+  }
+  gradiente.endShape();
+  gradiente.endDraw();
+  gradiente.filter(BLUR, 1.7);
+
+  pg.imageMode(CORNER);
+  pg.image(gradiente, x, y, w, h);
+  desenharGranuladoGradienteMalha(pg, x, y, w, h, density, seedValue, tempo, energy, ar, ag, ab, br, bg, bb);
+}
+
+void desenharVerticeGradienteMalha(PGraphics pg, float x, float y, float w, float h, int gx, int gy, int cols, int rows, float seedValue, float tempo, float deform, float vib, float energy, float bass, float mid, float treble, float ar, float ag, float ab, float br, float bg, float bb, MutableBrand brand, boolean temMarca, int kernelCount) {
+  float u = gx / float(cols);
+  float v = gy / float(rows);
+  float n1 = noise(u * 2.4 + seedValue * 0.11, v * 2.4 + 9.0, tempo);
+  float n2 = noise(u * 5.2 + 37.0, v * 5.2 + seedValue * 0.07, tempo * 1.45);
+  float px = x + u * w + (n1 - 0.5) * deform + (n2 - 0.5) * vib;
+  float py = y + v * h + (noise(u * 2.7 + 71.0, v * 2.7 + 14.0, tempo) - 0.5) * deform;
+  int c = corGradienteMalha(u, v, seedValue, tempo, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca, kernelCount);
+  pg.fill(c);
+  pg.vertex(px, py);
+}
+
+int corGradienteMalha(float u, float v, float seedValue, float tempo, float energy, float bass, float mid, float treble, float ar, float ag, float ab, float br, float bg, float bb, MutableBrand brand, boolean temMarca, int kernelCount) {
+  float baseN = noise(u * 1.35 + seedValue * 0.13, v * 1.20 + 8.0, tempo * 0.72);
+  float campo = campoOrganicoEstampa(u, v, tempo, brand, temMarca);
+  float r = lerp(ar, br, 0.36 + baseN * 0.22);
+  float g = lerp(ag, bg, 0.36 + baseN * 0.22);
+  float b = lerp(ab, bb, 0.36 + baseN * 0.22);
+  float total = 1.0;
+
+  for (int i = 0; i < kernelCount; i++) {
+    float phase = tempo * (0.26 + i * 0.055) + seedValue * 0.31 + i * 1.73;
+    float ku = 0.5 + cos(phase + i * 0.61) * (0.24 + 0.05 * sin(tempo + i));
+    float kv = 0.5 + sin(phase * 0.82 + i * 1.12) * (0.25 + 0.04 * cos(tempo * 0.7 + i));
+    ku += (noise(i * 3.7, tempo * 0.45) - 0.5) * (0.18 + mid * 0.06);
+    kv += (noise(i * 5.1 + 4.0, tempo * 0.38) - 0.5) * (0.18 + energy * 0.06);
+    float dx = u - ku;
+    float dy = v - kv;
+    float raio = 0.20 + noise(i * 0.7 + 2.0, tempo * 0.35) * 0.22 + bass * 0.060;
+    float d2 = (dx * dx + dy * dy) / max(0.0001, raio * raio);
+    float peso = exp(-d2 * (1.10 + i * 0.18));
+    float mix = fractEstampa(i * 0.37 + baseN * 0.34 + campo * 0.20 + tempo * 0.035);
+    float kr = lerp(ar, br, mix);
+    float kg = lerp(ag, bg, mix);
+    float kb = lerp(ab, bb, mix);
+    r += kr * peso;
+    g += kg * peso;
+    b += kb * peso;
+    total += peso;
+  }
+
+  r /= total;
+  g /= total;
+  b /= total;
+  float luz = 0.92 + campo * 0.12 + sin((u - v) * TWO_PI + tempo) * 0.025 + treble * 0.018;
+  return color(constrain(r * luz, 0, 255), constrain(g * luz, 0, 255), constrain(b * luz, 0, 255), 255);
+}
+
+void desenharGranuladoGradienteMalha(PGraphics pg, float x, float y, float w, float h, int density, float seedValue, float tempo, float energy, float ar, float ag, float ab, float br, float bg, float bb) {
+  int total = constrain(round(w * h / 260.0) + density * 120, 1800, 14000);
+  pg.noStroke();
+  for (int i = 0; i < total; i++) {
+    float u = hash1D(i + floor(tempo * 7.0) * 13.0 + seedValue * 17.0, 211.0);
+    float v = hash1D(i * 1.37 + floor(tempo * 5.0) * 19.0 + seedValue * 23.0, 307.0);
+    float n = noise(u * 18.0, v * 18.0, tempo);
+    float a = 14 + n * 34 + energy * 16;
+    float s = 0.55 + hash1D(i, 509.0) * 1.65;
+    if (i % 3 == 0) {
+      pg.fill(255, a * 0.52);
+    } else if (i % 3 == 1) {
+      pg.fill(0, a * 0.68);
+    } else {
+      pg.fill(lerp(ar, br, n), lerp(ag, bg, n), lerp(ab, bb, n), a * 0.34);
+    }
+    pg.rect(x + u * w, y + v * h, s, s);
+  }
+}
+
+void desenharPadraoTopograficoOrganico(PGraphics pg, float x, float y, float w, float h, int density, float baseStep, float seedValue, float t, float energy, float bass, float mid, float treble, float ar, float ag, float ab, float br, float bg, float bb, MutableBrand brand, boolean temMarca) {
+  int linhas = constrain(density * 3 + round(padraoEscala * 18), 32, 112);
+  int pts = 120;
+  float centroA = 0.28 + noise(seedValue + 2.0, t * 0.12) * 0.24 + padraoRefX * 0.0007;
+  float centroB = 0.68 + noise(seedValue + 11.0, t * 0.10) * 0.18 + padraoRefY * 0.0005;
+  float gap = w / max(1, linhas - 1);
+
+  pg.noFill();
+  pg.strokeCap(ROUND);
+  pg.strokeJoin(ROUND);
+  for (int j = -4; j < linhas + 4; j++) {
+    float baseU = j / float(max(1, linhas - 1));
+    float lado = baseU < 0.50 ? -1 : 1;
+    float n0 = noise(j * 0.08 + seedValue * 0.3, t * 0.18);
+    float peso = max(0.45, (0.52 + n0 * 0.70 + bass * 0.20) * scaleStrokeEstampa(w, h));
+    corEstampaStroke(pg, n0, 88 + energy * 72, ar, ag, ab, br, bg, bb);
+    pg.strokeWeight(peso);
+    pg.beginShape();
+    for (int i = 0; i <= pts; i++) {
+      float v = i / float(pts);
+      float campo = campoOrganicoEstampa(baseU, v, t, brand, temMarca);
+      float valeA = exp(-sq((v - centroA) * 3.4));
+      float valeB = exp(-sq((v - centroB) * 4.1));
+      float ondula = noise(baseU * 3.0 + 8.0, v * 3.4 + j * 0.018, t * 0.35) - 0.5;
+      float separacao = gap * (0.30 + campo * 0.72 + bass * 0.18);
+      float puxao = (valeA - valeB * 0.74) * w * (0.12 + mid * 0.035) * lado;
+      float xx = x + baseU * w + ondula * w * (0.035 + treble * 0.010) + puxao + padraoRefX * 0.03;
+      float yy = y + v * h + sin(v * PI * 5.0 + j * 0.12 + t) * separacao * 0.28;
+      if (i == 0 || i == pts) yy += (noise(j * 0.1, i, t) - 0.5) * h * 0.025;
+      pg.curveVertex(xx, yy);
+    }
+    pg.endShape();
+  }
+}
+
+void desenharPadraoFluxoOrganico(PGraphics pg, float x, float y, float w, float h, int density, float baseStep, float seedValue, float t, float energy, float bass, float mid, float treble, float ar, float ag, float ab, float br, float bg, float bb, MutableBrand brand, boolean temMarca) {
+  int linhas = constrain(density * 2 + 10, 18, 62);
+  int pts = 130;
+  pg.noFill();
+  pg.strokeCap(ROUND);
+  pg.strokeJoin(ROUND);
+
+  for (int j = 0; j < linhas; j++) {
+    float uBase = (j + 0.5) / linhas;
+    float n0 = noise(j * 0.12 + seedValue, t * 0.18);
+    float pesoBase = max(1.8, min(w, h) * (0.006 + n0 * 0.010 + bass * 0.004));
+    float alphaBase = 136 + n0 * 76 + energy * 22;
+
+    corEstampaStroke(pg, n0, alphaBase * 0.42, ar, ag, ab, br, bg, bb);
+    pg.strokeWeight(pesoBase * 2.2);
+    desenharCurvaFluxoOrganica(pg, x, y, w, h, uBase, j, pts, t, seedValue, mid, treble, brand, temMarca);
+
+    corEstampaStroke(pg, 1.0 - n0 * 0.42, alphaBase, ar, ag, ab, br, bg, bb);
+    pg.strokeWeight(pesoBase);
+    desenharCurvaFluxoOrganica(pg, x, y, w, h, uBase, j, pts, t + 0.07, seedValue + 4.0, mid, treble, brand, temMarca);
+  }
+}
+
+void desenharCurvaFluxoOrganica(PGraphics pg, float x, float y, float w, float h, float uBase, int idx, int pts, float t, float seedValue, float mid, float treble, MutableBrand brand, boolean temMarca) {
+  pg.beginShape();
+  for (int i = 0; i <= pts; i++) {
+    float v = i / float(pts);
+    float campo = campoOrganicoEstampa(uBase, v, t, brand, temMarca);
+    float nA = noise(uBase * 2.5 + idx * 0.06, v * 2.5 + seedValue, t * 0.30);
+    float nB = noise(uBase * 6.0 + 14.0, v * 4.0 + idx * 0.11, t * 0.46);
+    float amp = w * (0.055 + campo * 0.055 + mid * 0.020);
+    float laco = sin(v * TWO_PI * (1.0 + nA * 1.8) + idx * 0.28 + t * 0.9) * amp;
+    float xx = x + uBase * w + laco + (nB - 0.5) * amp * 1.7 + padraoRefX * 0.025;
+    float yy = y + v * h + sin(uBase * TWO_PI * 2.0 + t + v * PI) * h * 0.020 * treble + padraoRefY * 0.025;
+    pg.curveVertex(xx, yy);
+  }
+  pg.endShape();
+}
+
+float scaleStrokeEstampa(float w, float h) {
+  return constrain(min(w, h) / 720.0, 0.55, 1.45);
 }
 
 float valorDnaEstampa(float u, float v, float t, MutableBrand brand, boolean temMarca, float peso) {
@@ -932,7 +1132,7 @@ void renderMutableBrand(PGraphics pg, MutableBrand brand, MutationParams params,
   pg.rotate(brand.currentRotation);
   pg.scale(fit * brand.currentScale);
 
-  if (params.mode == 0) {
+  if (params.mode == 0 || params.mode == 12 || params.mode == 13 || params.mode == 14) {
     renderBrandNormalReactive(pg, brand, params, fit, audio);
     pg.popMatrix();
     return;
@@ -992,7 +1192,7 @@ void renderMutableBrandEmPonto(PGraphics pg, MutableBrand brand, MutationParams 
   pg.rotate(brand.currentRotation);
   pg.scale(fit * brand.currentScale);
 
-  if (params.mode == 0) {
+  if (params.mode == 0 || params.mode == 12 || params.mode == 13 || params.mode == 14) {
     renderBrandNormalReactive(pg, brand, params, fit, audio);
     pg.popMatrix();
     return;
@@ -3568,6 +3768,7 @@ void desenharFotoObjetoCircular(PGraphics pg, PImage img, float cx, float cy, fl
 
   int s = max(8, round(diam));
   PGraphics obj = createGraphics(s, s, P2D);
+  obj.smooth(8);
   obj.beginDraw();
   obj.clear();
   obj.imageMode(CENTER);
@@ -3575,7 +3776,8 @@ void desenharFotoObjetoCircular(PGraphics pg, PImage img, float cx, float cy, fl
   obj.image(img, s * 0.5, s * 0.5, img.width * sc, img.height * sc);
   obj.endDraw();
 
-  PGraphics maskPg = createGraphics(s, s);
+  PGraphics maskPg = createGraphics(s, s, P2D);
+  maskPg.smooth(8);
   maskPg.beginDraw();
   maskPg.background(0);
   maskPg.noStroke();
@@ -3621,6 +3823,7 @@ void desenharFotoObjetoForma(PGraphics pg, PImage img, float cx, float cy, float
   int sw = max(8, round(w));
   int sh = max(8, round(h));
   PGraphics obj = createGraphics(sw, sh, P2D);
+  obj.smooth(8);
   obj.beginDraw();
   obj.clear();
   obj.imageMode(CENTER);
@@ -3628,7 +3831,8 @@ void desenharFotoObjetoForma(PGraphics pg, PImage img, float cx, float cy, float
   obj.image(img, sw * 0.5, sh * 0.5, img.width * sc, img.height * sc);
   obj.endDraw();
 
-  PGraphics maskPg = createGraphics(sw, sh);
+  PGraphics maskPg = createGraphics(sw, sh, P2D);
+  maskPg.smooth(8);
   maskPg.beginDraw();
   maskPg.background(0);
   maskPg.noStroke();
@@ -3656,6 +3860,7 @@ void desenharFotoObjetoMarcaPanfleto(PGraphics pg, PImage img, float cx, float c
   int sw = max(8, round(w));
   int sh = max(8, round(h));
   PGraphics obj = createGraphics(sw, sh, P2D);
+  obj.smooth(8);
   obj.beginDraw();
   obj.clear();
   obj.imageMode(CENTER);
@@ -3668,6 +3873,7 @@ void desenharFotoObjetoMarcaPanfleto(PGraphics pg, PImage img, float cx, float c
   obj.endDraw();
 
   PGraphics maskPg = createGraphics(sw, sh, P2D);
+  maskPg.smooth(8);
   maskPg.beginDraw();
   maskPg.clear();
   maskPg.imageMode(CENTER);

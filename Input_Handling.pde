@@ -54,6 +54,7 @@ void mousePressed() {
       if (mouseX > padraoSliders[i][0] && mouseX < padraoSliders[i][0] + padraoSliders[i][2] &&
           mouseY > padraoSliders[i][1] - 10 && mouseY < padraoSliders[i][1] + 12) {
         dragPadraoSlider = i;
+        atualizarSliderPadrao();
         return;
       }
     }
@@ -748,10 +749,16 @@ boolean handlePageMousePressed() {
       if (mouseX > padraoSliders[i][0] && mouseX < padraoSliders[i][0] + padraoSliders[i][2] &&
           mouseY > padraoSliders[i][1] - 10 && mouseY < padraoSliders[i][1] + 12) {
         dragPadraoSlider = i;
+        atualizarSliderPadrao();
         return true;
       }
     }
   } else if (appPage == 4) {
+    if (dentroDoBotao(freezeBrandButton)) {
+      if (mutationParams != null) mutationParams.freezeState = !mutationParams.freezeState;
+      mostrarStatus(mutationParams != null && mutationParams.freezeState ? "Mutação congelada" : "Mutação liberada");
+      return true;
+    }
     for (int i = 0; i < exportPageButtons.length; i++) {
       if (dentroDoBotao(exportPageButtons[i])) {
         executarAcaoExportacao(i);
@@ -826,9 +833,8 @@ boolean handleColorPickerMousePressed() {
   }
   if (mouseX >= colorPickerArea[0] && mouseX <= colorPickerArea[0] + colorPickerArea[2] &&
       mouseY >= colorPickerArea[1] && mouseY <= colorPickerArea[1] + colorPickerArea[3]) {
-    colorPickerHue = constrain((mouseX - colorPickerArea[0]) / max(1, colorPickerArea[2]), 0, 0.9999);
-    colorPickerSat = 1;
-    colorPickerBri = 1;
+    colorPickerSat = constrain((mouseX - colorPickerArea[0]) / max(1, colorPickerArea[2]), 0, 1);
+    colorPickerBri = constrain(1.0 - (mouseY - colorPickerArea[1]) / max(1, colorPickerArea[3]), 0, 1);
     aplicarColorPicker();
     return true;
   }
@@ -843,7 +849,7 @@ boolean handleColorPickerMousePressed() {
 }
 
 void aplicarColorPicker() {
-  int c = corInterfacePaletaPorT(colorPickerHue);
+  int c = java.awt.Color.HSBtoRGB(colorPickerHue, colorPickerSat, colorPickerBri);
   if (colorPickerTarget == 0) estampaCorA = c;
   else if (colorPickerTarget == 1) estampaCorB = c;
   else estampaCorFundo = c;
@@ -941,20 +947,7 @@ void mouseDragged() {
   }
 
   if (dragPadraoSlider != -1) {
-    int i = dragPadraoSlider;
-    float t = constrain((mouseX - padraoSliders[i][0]) / padraoSliders[i][2], 0, 1);
-    float mn = padraoSliders[i][3];
-    float mx = padraoSliders[i][4];
-    float val = mn + t * (mx - mn);
-    padraoSliders[i][5] = val;
-
-    if (i == 0) padraoQtdFormas = round(val);
-    if (i == 1) padraoEspacoX = val;
-    if (i == 2) padraoEspacoY = val;
-    if (i == 3) padraoEscala = val;
-    if (i == 4) padraoRefX = val;
-    if (i == 5) padraoRefY = val;
-    if (i == 6) padraoDiagonal = val;
+    atualizarSliderPadrao();
   }
 
   if (dragEstampaHsvSlider != -1) {
@@ -1367,12 +1360,32 @@ void atualizarSliderEstampaHSV() {
 }
 
 void aplicarCorEstampaHSV() {
-  float h = estampaHsvSliders[0][5] / 360.0;
-  int c = corInterfacePaletaPorT(h);
-  float a = constrain(estampaHsvSliders[3][5], 0, 100) / 100.0;
-  int ca = (int)(a * 255.0);
-  setCorAtualEstampa(estampaColorTarget, (ca << 24) | (c & 0x00FFFFFF));
+  float h = estampaHsvSliders[0][5];
+  float s = estampaHsvSliders[1][5];
+  float b = estampaHsvSliders[2][5];
+  float a = estampaHsvSliders[3][5];
+  colorMode(HSB, 360, 100, 100, 100);
+  setCorAtualEstampa(estampaColorTarget, color(h, s, b, a));
+  colorMode(RGB, 255);
   estampaUsarCoresMarca = false;
+}
+
+void atualizarSliderPadrao() {
+  if (dragPadraoSlider < 0 || dragPadraoSlider >= padraoSliders.length) return;
+  int i = dragPadraoSlider;
+  float t = constrain((mouseX - padraoSliders[i][0]) / max(1, padraoSliders[i][2]), 0, 1);
+  float mn = padraoSliders[i][3];
+  float mx = padraoSliders[i][4];
+  float val = mn + t * (mx - mn);
+  padraoSliders[i][5] = val;
+
+  if (i == 0) padraoQtdFormas = round(val);
+  if (i == 1) padraoEspacoX = val;
+  if (i == 2) padraoEspacoY = val;
+  if (i == 3) padraoEscala = val;
+  if (i == 4) padraoRefX = val;
+  if (i == 5) padraoRefY = val;
+  if (i == 6) padraoDiagonal = val;
 }
 
 void mouseWheel(MouseEvent event) {
