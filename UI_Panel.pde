@@ -539,19 +539,20 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   y += (bh + gap) * baseRows + 20;
 
   y = desenharSecaoLabel("Camadas generativas", x, y, labelSize);
-  for (int i = 1; i <= 11; i++) {
-    int k = i - 1;
+  int[] generativeModes = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 17, 19 };
+  for (int k = 0; k < generativeModes.length; k++) {
+    int i = generativeModes[k];
     int col = k % buttonCols;
     int row = k / buttonCols;
     mutationModeButtons[i][0] = x + col * (bw + gap);
     mutationModeButtons[i][1] = y + row * (bh + gap);
-    boolean ultimoSozinho = (buttonCols == 2 && 11 % 2 == 1) && i == 11;
+    boolean ultimoSozinho = (buttonCols == 2 && generativeModes.length % 2 == 1) && k == generativeModes.length - 1;
     mutationModeButtons[i][2] = ultimoSozinho ? w : bw;
     mutationModeButtons[i][3] = bh;
     boolean ativo = mutationParams != null && mutationParams.mode == i;
     desenharBotaoAcaoEstado(mutationModeButtons[i], mutationModeLabels[i], ativo);
   }
-  int visualBaseRows = ceil(11 / float(buttonCols));
+  int visualBaseRows = ceil(generativeModes.length / float(buttonCols));
   y += (bh + gap) * visualBaseRows + 14;
 
   y = desenharSecaoLabel("Comportamento sonoro", x, y, labelSize);

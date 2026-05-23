@@ -1029,7 +1029,8 @@ class MutationParams {
   color backgroundColor = color(0, 0, 6, 100);
 
   void randomize() {
-    mode = floor(random(0, mutationModeLabels.length));
+    int[] modosAtivos = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 17, 19 };
+    mode = modosAtivos[floor(random(modosAtivos.length))];
     if (mode == 5) mode = floor(random(0, 5));
     deformationMode = floor(random(0, deformationModeLabels.length));
     freezeState = false;
