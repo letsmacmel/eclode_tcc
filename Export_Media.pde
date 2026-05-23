@@ -2,7 +2,7 @@ void salvarPNG() {
   String timestamp = timeStamp();
   renderShapeLayer(exportLayer, semente, tempoFlutua, faseFolego);
   exportLayer.save("shape_" + timestamp + ".png");
-  mostrarStatus("PNG salvo");
+  mostrarStatus("PNG exportado com sucesso");
 }
 
 void salvarPanfletoPNG() {
@@ -33,7 +33,7 @@ void salvarPanfletoJPG() {
 
     String caminho = sketchPath("panfleto_" + timestamp + ".jpg");
     salvarPGraphicsComoJPG(pg, caminho);
-    mostrarStatus("Panfleto JPG salvo: " + new File(caminho).getName());
+    mostrarStatus("Panfleto JPG exportado com sucesso");
   } catch (Exception e) {
     println("Erro exportando panfleto: " + e.getMessage());
     mostrarStatus("Falha ao salvar panfleto: " + e.getMessage());
@@ -137,7 +137,7 @@ void salvarPanfletoMP4() {
 
     int exit = proc.waitFor();
     if (exit == 0) {
-      mostrarStatus("Panfleto MP4 salvo: " + new File(caminho).getName());
+      mostrarStatus("Panfleto MP4 exportado com sucesso");
     } else {
       mostrarStatus("Falha ao salvar MP4");
     }
@@ -161,9 +161,19 @@ void salvarEstampaPNG() {
     mostrarStatus("Falha ao capturar estampa");
     return;
   }
+  PGraphics pg = createGraphics(recorte.width, recorte.height, P2D);
+  pg.smooth(8);
+  pg.beginDraw();
+  pg.colorMode(RGB, 255, 255, 255, 255);
+  int fundo = estampaUsarCoresMarca ? 0xFFEFEBE8 : estampaCorFundo;
+  pg.background(canalR(fundo), canalG(fundo), canalB(fundo));
+  pg.imageMode(CORNER);
+  pg.noTint();
+  pg.image(recorte, 0, 0);
+  pg.endDraw();
   String caminho = sketchPath("estampa_" + timestamp + ".png");
-  recorte.save(caminho);
-  mostrarStatus("Estampa PNG salva: " + new File(caminho).getName());
+  pg.save(caminho);
+  mostrarStatus("Estampa PNG exportada com sucesso");
 }
 
 void salvarEstampaJPG() {
@@ -177,15 +187,15 @@ void salvarEstampaJPG() {
   pg.smooth(8);
   pg.beginDraw();
   pg.colorMode(RGB, 255);
-  int fundo = estampaUsarCoresMarca ? color(238, 235, 228) : estampaCorFundo;
-  pg.background(red(fundo), green(fundo), blue(fundo));
+  int fundo = estampaUsarCoresMarca ? 0xFFEFEBE8 : estampaCorFundo;
+  pg.background(canalR(fundo), canalG(fundo), canalB(fundo));
   pg.imageMode(CORNER);
   pg.noTint();
   pg.image(recorte, 0, 0);
   pg.endDraw();
   String caminho = sketchPath("estampa_" + timestamp + ".jpg");
   pg.save(caminho);
-  mostrarStatus("Estampa JPG salva: " + new File(caminho).getName());
+  mostrarStatus("Estampa JPG exportada com sucesso");
 }
 
 void salvarEstampaMP4() {
@@ -201,8 +211,8 @@ void salvarEstampaMP4() {
   }
 
   String timestamp = timeStamp();
-  int outW = base.width;
-  int outH = base.height;
+  int outW = max(2, base.width - (base.width % 2));
+  int outH = max(2, base.height - (base.height % 2));
   int fps = 24;
   int totalFrames = fps * 10;
   String caminho = sketchPath("estampa_" + timestamp + ".mp4");
@@ -244,6 +254,9 @@ void salvarEstampaMP4() {
       PImage recorte = capturarRecorteEstampaPreview();
       if (recorte == null) continue;
       pg.beginDraw();
+      pg.colorMode(RGB, 255, 255, 255, 255);
+      int fundo = estampaUsarCoresMarca ? 0xFFEFEBE8 : estampaCorFundo;
+      pg.background(canalR(fundo), canalG(fundo), canalB(fundo));
       pg.imageMode(CORNER);
       pg.noTint();
       pg.image(recorte, 0, 0, outW, outH);
@@ -259,7 +272,7 @@ void salvarEstampaMP4() {
     input.close();
     input = null;
     int exit = proc.waitFor();
-    if (exit == 0) mostrarStatus("Estampa MP4 salva: " + new File(caminho).getName());
+    if (exit == 0) mostrarStatus("Estampa MP4 exportada com sucesso");
     else mostrarStatus("Falha ao salvar estampa MP4");
   } catch (Exception e) {
     println("Erro exportando MP4 da estampa: " + e.getMessage());
@@ -274,9 +287,9 @@ void salvarEstampaMP4() {
 }
 
 PImage capturarRecorteEstampaPreview() {
-  atualizarLayout();
   int oldAppPage = appPage;
   appPage = 3;
+  atualizarLayout();
   renderShapeLayer(exportLayer, semente, tempoFlutua, faseFolego);
   int sx = constrain(round(estampaRenderX), 0, max(0, exportLayer.width - 1));
   int sy = constrain(round(estampaRenderY), 0, max(0, exportLayer.height - 1));
@@ -288,8 +301,6 @@ PImage capturarRecorteEstampaPreview() {
 }
 
 PImage capturarRecortePanfletoPreview(int mediaFrame, boolean limpo) {
-  atualizarLayout();
-
   int oldAppPage = appPage;
   boolean oldExportando = exportandoPanfletoLimpo;
   int oldMediaFrame = panfletoMidiaExportFrame;
@@ -297,6 +308,7 @@ PImage capturarRecortePanfletoPreview(int mediaFrame, boolean limpo) {
   appPage = 2;
   exportandoPanfletoLimpo = limpo;
   if (mediaFrame >= 0) panfletoMidiaExportFrame = mediaFrame;
+  atualizarLayout();
 
   renderShapeLayer(exportLayer, semente, tempoFlutua, faseFolego);
 
@@ -344,20 +356,71 @@ void salvarJPG() {
   jpgLayer.image(exportLayer, 0, 0);
   jpgLayer.endDraw();
   jpgLayer.save("shape_" + timestamp + ".jpg");
-  mostrarStatus("JPG salvo");
+  mostrarStatus("JPG exportado com sucesso");
 }
 
 void salvarSVG() {
   String timestamp = timeStamp();
-  renderShapeLayer(exportLayer, semente, tempoFlutua, faseFolego);
+  String caminho = sketchPath("shape_" + timestamp + ".svg");
+  try {
+    if (marcaOriginalSemEfeito() && salvarMarcaSVGVetorial(caminho)) {
+      mostrarStatus("SVG vetorial exportado com sucesso");
+      return;
+    }
 
-  PGraphics svg = createGraphics(width, height, SVG, "shape_" + timestamp + ".svg");
+    PGraphics svg = createGraphics(width, height, SVG, caminho);
+    svg.beginDraw();
+    renderShapeLayerContent(svg, semente, tempoFlutua, faseFolego, false);
+    svg.dispose();
+    svg.endDraw();
+    mostrarStatus("SVG com efeito exportado com sucesso");
+  } catch (Exception e) {
+    println("Falha no SVG vetorial, usando compatibilidade: " + e);
+    salvarSVGCompatibilidadeRaster(caminho);
+  }
+}
+
+void salvarSVGCompatibilidadeRaster(String caminho) {
+  PGraphics svg = createGraphics(width, height, SVG, caminho);
+  renderShapeLayer(exportLayer, semente, tempoFlutua, faseFolego);
   svg.beginDraw();
   svg.imageMode(CORNER);
   svg.image(exportLayer, 0, 0, width, height);
   svg.dispose();
   svg.endDraw();
-  mostrarStatus("SVG salvo (compatibilidade)");
+  mostrarStatus("SVG exportado em modo compatível");
+}
+
+boolean marcaOriginalSemEfeito() {
+  return appPage != 2 && appPage != 3 && activeBrand != null && activeBrand.sourceShape != null && mutationParams != null && mutationParams.mode == 0;
+}
+
+boolean salvarMarcaSVGVetorial(String caminho) {
+  if (activeBrand == null || activeBrand.sourceShape == null || mutationParams == null) return false;
+
+  float assetW = max(1, activeBrand.maxX - activeBrand.minX);
+  float assetH = max(1, activeBrand.maxY - activeBrand.minY);
+  float fit = min((width * 0.62) / assetW, (height * 0.54) / assetH);
+  fit = constrain(fit, 0.04, 7.0);
+  int c = corMarcaRender(mutationParams, false);
+
+  PGraphics svg = createGraphics(width, height, SVG, caminho);
+  svg.beginDraw();
+  svg.colorMode(RGB, 255, 255, 255, 255);
+  svg.noStroke();
+  svg.fill(canalR(c), canalG(c), canalB(c), canalA(c) * constrain(mutationParams.opacityAmount, 0, 1));
+  svg.pushMatrix();
+  svg.translate(width * 0.5, height * 0.5);
+  svg.rotate(activeBrand.currentRotation);
+  svg.scale(fit * activeBrand.currentScale);
+  svg.shapeMode(CORNER);
+  activeBrand.sourceShape.disableStyle();
+  svg.shape(activeBrand.sourceShape, -activeBrand.center.x, -activeBrand.center.y);
+  activeBrand.sourceShape.enableStyle();
+  svg.popMatrix();
+  svg.dispose();
+  svg.endDraw();
+  return true;
 }
 
 void alternarCapturaVideo() {
@@ -440,7 +503,7 @@ void finalizarProcessoVideo() {
     }
     int exitCode = (videoFFmpegProcess != null) ? videoFFmpegProcess.waitFor() : -1;
     if (exitCode == 0) {
-      mostrarStatus("MP4 salvo: " + new File(videoOutputPath).getName());
+      mostrarStatus("MP4 exportado com sucesso");
     } else {
       mostrarStatus("Falha ao gerar MP4");
     }

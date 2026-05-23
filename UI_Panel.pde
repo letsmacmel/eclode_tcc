@@ -41,6 +41,32 @@ void desenharHeaderApp() {
   }
 }
 
+void desenharAvisoStatus() {
+  if (!salvarFlash || statusMessage == null || statusMessage.length() == 0) return;
+
+  pushStyle();
+  colorMode(RGB, 255);
+  if (fontHelv != null) textFont(fontHelv);
+  float alpha = constrain(map(salvarTimer, 0, 120, 0, 1), 0, 1);
+  if (salvarTimer > 24) alpha = 1;
+  float x = max(18, menuOffsetX + 18);
+  float y = max(uiHeaderHeight + uiTabsHeight + 16, height - 74);
+  float labelSize = constrain(height * 0.014, 10.5, 12.5);
+  textSize(labelSize);
+  float tw = min(width * 0.42, textWidth(statusMessage) + 34);
+  float th = 34;
+
+  noStroke();
+  fill(canalR(UI_DARK), canalG(UI_DARK), canalB(UI_DARK), 218 * alpha);
+  rect(x, y, tw, th, 7);
+  fill(canalR(UI_GREEN), canalG(UI_GREEN), canalB(UI_GREEN), 230 * alpha);
+  rect(x, y + 6, 3, th - 12, 2);
+  fill(canalR(UI_LIGHT), canalG(UI_LIGHT), canalB(UI_LIGHT), 235 * alpha);
+  textAlign(LEFT, CENTER);
+  text(statusMessage, x + 15, y + th * 0.5);
+  popStyle();
+}
+
 void desenharBotaoHeader(float x, float y, float w, float h, String label) {
   stroke(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN));
   fill(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN), 34);
@@ -1038,7 +1064,7 @@ float desenharControlePaletaMarca(float x, float y, float w, float buttonH, floa
     desenharBotaoAcaoEstado(marcaPaletaSlotButtons[i], liberado ? ("Cor " + (i + 1)) : "Bloq.", ativo);
     noStroke();
     int c = marcaPaletaCores[i];
-    fill(red(c), green(c), blue(c), liberado ? alpha(c) : 46);
+    fill(canalR(c), canalG(c), canalB(c), liberado ? canalA(c) : 46);
     rect(bx + 8, by + 7, swatchW - 16, swatchH - 14, 4);
   }
   y += (swatchH + swatchGap) * 2 + 8;
@@ -1120,7 +1146,7 @@ float desenharControlePaletaFundoPanfleto(float x, float y, float w, float butto
     desenharBotaoAcaoEstado(panfletoFundoPaletaSlotButtons[i], liberado ? ("Cor " + (i + 1)) : "Bloq.", ativo);
     int c = panfletoFundoPaletaCores[i];
     noStroke();
-    fill(red(c), green(c), blue(c), liberado ? 245 : 62);
+    fill(canalR(c), canalG(c), canalB(c), liberado ? 245 : 62);
     rect(bx + 8, by + swatchH - 11, swatchW - 16, 4, 2);
   }
   y += (swatchH + swatchGap) * 2 + 8;
@@ -1200,7 +1226,7 @@ void desenharFaixaAlphaCompleta(float x, float y, float w, float h, float hueBas
   int blocos = max(8, int(w / 8));
   for (int i = 0; i < blocos; i++) {
     int c = (i % 2 == 0) ? UI_DARK : UI_BROWN;
-    fill(red(c), green(c), blue(c));
+    fill(canalR(c), canalG(c), canalB(c));
     rect(x + i * (w / blocos), y, ceil(w / blocos) + 1, h);
   }
   colorMode(HSB, 360, 100, 100, 100);
@@ -1217,7 +1243,7 @@ void desenharFaixaMatiz(float x, float y, float w, float h) {
   noStroke();
   for (int i = 0; i < 4; i++) {
     int c = corInterfacePaleta(i);
-    fill(red(c), green(c), blue(c));
+    fill(canalR(c), canalG(c), canalB(c));
     rect(x + i * w / 4.0, y, w / 4.0 + 1, h);
   }
 }
@@ -1226,7 +1252,7 @@ void desenharFaixaSaturacao(float x, float y, float w, float h, float hueBase, f
   noStroke();
   for (int i = 0; i < 4; i++) {
     int c = corInterfacePaleta(i);
-    fill(red(c), green(c), blue(c), 70 + i * 45);
+    fill(canalR(c), canalG(c), canalB(c), 70 + i * 45);
     rect(x + i * w / 4.0, y, w / 4.0 + 1, h);
   }
 }
@@ -1235,7 +1261,7 @@ void desenharFaixaLuminosidade(float x, float y, float w, float h, float hueBase
   noStroke();
   for (int i = 0; i < 4; i++) {
     int c = corInterfacePaleta(i);
-    fill(red(c), green(c), blue(c));
+    fill(canalR(c), canalG(c), canalB(c));
     rect(x + i * w / 4.0, y, w / 4.0 + 1, h);
   }
 }
@@ -1245,14 +1271,14 @@ void desenharFaixaAlpha(float x, float y, float w, float h, float hueBase, float
   int blocos = max(8, int(w / 8));
   for (int i = 0; i < blocos; i++) {
     int c = (i % 2 == 0) ? UI_DARK : UI_BROWN;
-    fill(red(c), green(c), blue(c));
+    fill(canalR(c), canalG(c), canalB(c));
     rect(x + i * (w / blocos), y, ceil(w / blocos) + 1, h);
   }
   int passos = max(12, int(w));
   for (int i = 0; i < passos; i++) {
     float alphaVal = map(i, 0, passos - 1, 0, 100);
     int c = corInterfacePaletaPorT(float(i) / max(1, passos - 1));
-    fill(red(c), green(c), blue(c), alphaVal);
+    fill(canalR(c), canalG(c), canalB(c), alphaVal);
     rect(x + i * (w / passos), y, ceil(w / passos) + 1, h);
   }
 }
@@ -1351,7 +1377,7 @@ float desenharControleCorEstampa(float x, float y, float w, float buttonH) {
     desenharBotaoAcaoEstado(estampaColorButtons[i], estampaColorLabels[i], estampaColorTarget == i);
     int c = corAtualEstampa(i);
     noStroke();
-    fill(red(c), green(c), blue(c), alpha(c));
+    fill(canalR(c), canalG(c), canalB(c), canalA(c));
     rect(estampaColorButtons[i][0] + 7, y + 7, 12, btnH - 14, 3);
   }
   y += btnH + 32;
@@ -1373,7 +1399,7 @@ float desenharControleCorEstampa(float x, float y, float w, float buttonH) {
   }
   int c = corAtualEstampa(estampaColorTarget);
   noStroke();
-  fill(red(c), green(c), blue(c), alpha(c));
+  fill(canalR(c), canalG(c), canalB(c), canalA(c));
   rect(x + w - 32, y - step * 4 + 2, 32, step * 4 - 14, 6);
   return y + 8;
 }
@@ -1431,6 +1457,7 @@ void desenharSliderGenerico(float[] s, String label, int decimals) {
 
 void desenharColorPicker() {
   if (!colorPickerAberto) return;
+  colorMode(RGB, 255);
 
   float boxW = min(360, width * 0.42);
   float boxH = min(390, height * 0.64);

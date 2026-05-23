@@ -1103,11 +1103,11 @@ void atualizarSliderDensidadePontos() {
 
 float[] hsvAtualMarca() {
   color c = mutationParams != null ? mutationParams.primaryColor : UI_LIGHT;
-  int r = int(red(c));
-  int g = int(green(c));
-  int b = int(blue(c));
+  int r = int(canalR(c));
+  int g = int(canalG(c));
+  int b = int(canalB(c));
   float[] out = java.awt.Color.RGBtoHSB(r, g, b, null);
-  return new float[] { out[0] * 360.0, out[1] * 100.0, out[2] * 100.0, alpha(c) / 255.0 * 100.0 };
+  return new float[] { out[0] * 360.0, out[1] * 100.0, out[2] * 100.0, canalA(c) / 255.0 * 100.0 };
 }
 
 void atualizarSliderMarcaHSV() {
@@ -1124,8 +1124,7 @@ void aplicarCorMarcaHSV() {
   float s = marcaHsvSliders[1][5];
   float b = marcaHsvSliders[2][5];
   float a = marcaHsvSliders[3][5];
-  colorMode(HSB, 360, 100, 100, 100);
-  mutationParams.primaryColor = color(h, s, b, a);
+  mutationParams.primaryColor = corHSBA(h, s, b, a);
   mutationParams.secondaryColor = corSecundariaDaMarca(h, s, b, a);
   mutationParams.hueAmount = 0;
   mutationParams.saturationAmount = 1.0;
@@ -1135,22 +1134,21 @@ void aplicarCorMarcaHSV() {
     if (marcaPaletaCount < 3) marcaPaletaCount = 3;
     marcaPaletaCores[1] = mutationParams.secondaryColor;
   }
-  colorMode(RGB, 255);
 }
 
 int corSecundariaDaMarca(float h, float s, float b, float a) {
-  if (s < 1 || b < 1 || b > 99) return color(h, s, b, max(0, a * 0.78));
-  return color((h + 32) % 360, max(0, s * 0.82), b, max(0, a * 0.78));
+  if (s < 1 || b < 1 || b > 99) return corHSBA(h, s, b, max(0, a * 0.78));
+  return corHSBA((h + 32) % 360, max(0, s * 0.82), b, max(0, a * 0.78));
 }
 
 boolean marcaPaletaCoresIguais(int a, int b) {
-  return abs(red(a) - red(b)) < 1 && abs(green(a) - green(b)) < 1 && abs(blue(a) - blue(b)) < 1;
+  return abs(canalR(a) - canalR(b)) < 1 && abs(canalG(a) - canalG(b)) < 1 && abs(canalB(a) - canalB(b)) < 1;
 }
 
 String hexMarca(int c) {
-  int r = constrain(round(red(c)), 0, 255);
-  int g = constrain(round(green(c)), 0, 255);
-  int b = constrain(round(blue(c)), 0, 255);
+  int r = constrain(round(canalR(c)), 0, 255);
+  int g = constrain(round(canalG(c)), 0, 255);
+  int b = constrain(round(canalB(c)), 0, 255);
   return "#" + hex(r, 2) + hex(g, 2) + hex(b, 2);
 }
 
@@ -1344,11 +1342,11 @@ void setCorAtualEstampa(int target, int c) {
 
 float[] hsvAtualEstampa() {
   int c = corAtualEstampa(estampaColorTarget);
-  int r = int(red(c));
-  int g = int(green(c));
-  int b = int(blue(c));
+  int r = int(canalR(c));
+  int g = int(canalG(c));
+  int b = int(canalB(c));
   float[] out = java.awt.Color.RGBtoHSB(r, g, b, null);
-  return new float[] { out[0] * 360.0, out[1] * 100.0, out[2] * 100.0, alpha(c) / 255.0 * 100.0 };
+  return new float[] { out[0] * 360.0, out[1] * 100.0, out[2] * 100.0, canalA(c) / 255.0 * 100.0 };
 }
 
 void atualizarSliderEstampaHSV() {
@@ -1364,9 +1362,7 @@ void aplicarCorEstampaHSV() {
   float s = estampaHsvSliders[1][5];
   float b = estampaHsvSliders[2][5];
   float a = estampaHsvSliders[3][5];
-  colorMode(HSB, 360, 100, 100, 100);
-  setCorAtualEstampa(estampaColorTarget, color(h, s, b, a));
-  colorMode(RGB, 255);
+  setCorAtualEstampa(estampaColorTarget, corHSBA(h, s, b, a));
   estampaUsarCoresMarca = false;
 }
 
@@ -1602,7 +1598,7 @@ void onBrandFileSelected(File selection) {
     if (carregarMarcaDireta(selection)) {
       brandSystemEnabled = true;
       appPage = 0;
-      mostrarStatus("Marca carregada: " + selection.getName());
+      mostrarStatus("Marca importada com sucesso");
     } else {
       mostrarStatus("Nao carregou: " + selection.getName());
     }
@@ -1627,7 +1623,7 @@ void onFotoSelecionadaPanfleto(File selection) {
   panfletoFoto = img;
   panfletoFotoPath = selection.getAbsolutePath();
   limparMidiaPanfleto();
-  mostrarStatus("Foto carregada no panfleto: " + selection.getName());
+  mostrarStatus("Foto importada com sucesso");
 }
 
 void onMidiaSelecionadaPanfleto(File selection) {
@@ -1641,7 +1637,7 @@ void onMidiaSelecionadaPanfleto(File selection) {
   if (ok) {
     panfletoFoto = null;
     panfletoFotoPath = "";
-    mostrarStatus("Mídia carregada: " + selection.getName());
+    mostrarStatus("Mídia importada com sucesso");
   } else {
     mostrarStatus("Falha ao carregar GIF/vídeo");
   }
@@ -1661,5 +1657,5 @@ void onFotoSelecionadaEstampa(File selection) {
 
   estampaFoto = img;
   estampaFotoPath = selection.getAbsolutePath();
-  mostrarStatus("Textura carregada na estampa");
+  mostrarStatus("Textura importada com sucesso");
 }

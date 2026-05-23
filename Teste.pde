@@ -675,6 +675,7 @@ void draw() {
   image(exportLayer, 0, 0);
   desenharBarra();
   desenharColorPicker();
+  desenharAvisoStatus();
   atualizarExportacaoVideo();
 
   if (salvarFlash) {
