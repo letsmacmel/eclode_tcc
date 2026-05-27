@@ -599,8 +599,7 @@ void buildFilamentsModel() {
 void setup() {
   size(1100, 680, P2D);
   surface.setResizable(true);
-  surface.setLocation(0, 0);
-  surface.setSize(displayWidth, displayHeight);
+  surface.setSize(1100, 680);
   pixelDensity(1);
   smooth(8);
   colorMode(HSB, 360, 100, 100, 100);
