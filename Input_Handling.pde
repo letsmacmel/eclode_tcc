@@ -1,4 +1,6 @@
 void mousePressed() {
+  if (modoMarcaTelaCheia) return;
+
   if (colorPickerAberto) {
     if (handleColorPickerMousePressed()) return;
   }
@@ -41,10 +43,10 @@ void mousePressed() {
       return;
     }
 
-    for (int i = 0; i < padraoFormaButtons.length; i++) {
+    for (int i = 0; i < estampaModoIndices.length; i++) {
       if (dentroDoBotao(padraoFormaButtons[i])) {
-        formaPadraoAtiva = i;
-        mostrarStatus("Padrão: " + padraoFormaLabels[i]);
+        formaPadraoAtiva = estampaModoIndices[i];
+        mostrarStatus("Estampa: " + estampaModoLabels[formaPadraoAtiva]);
         return;
       }
     }
@@ -248,6 +250,14 @@ void mousePressed() {
     return;
   }
 
+  for (int i = 0; i < brandBackgroundButtons.length; i++) {
+    if (dentroDoBotao(brandBackgroundButtons[i])) {
+      marcaFundoBranco = i == 1;
+      mostrarStatus(marcaFundoBranco ? "Fundo branco" : "Fundo preto");
+      return;
+    }
+  }
+
   for (int i = 0; i < identityPresetButtons.length; i++) {
     if (dentroDoBotao(identityPresetButtons[i])) {
       applyIdentityPreset(i);
@@ -259,6 +269,13 @@ void mousePressed() {
       mouseY > pointDensitySlider[1] - 10 && mouseY < pointDensitySlider[1] + 12) {
     dragPointDensitySlider = 1;
     atualizarSliderDensidadePontos();
+    return;
+  }
+
+  if (mouseX > pointThicknessSlider[0] && mouseX < pointThicknessSlider[0] + pointThicknessSlider[2] &&
+      mouseY > pointThicknessSlider[1] - 10 && mouseY < pointThicknessSlider[1] + 12) {
+    dragPointThicknessSlider = 1;
+    atualizarSliderGrossuraPontos();
     return;
   }
 
@@ -390,6 +407,13 @@ boolean handlePageMousePressed() {
       mostrarStatus(brandSystemEnabled ? "Sistema de marca ligado" : "Sistema de marca desligado");
       return true;
     }
+    for (int i = 0; i < brandBackgroundButtons.length; i++) {
+      if (dentroDoBotao(brandBackgroundButtons[i])) {
+        marcaFundoBranco = i == 1;
+        mostrarStatus(marcaFundoBranco ? "Fundo branco" : "Fundo preto");
+        return true;
+      }
+    }
     for (int i = 0; i < identityPresetButtons.length; i++) {
       if (dentroDoBotao(identityPresetButtons[i])) {
         applyIdentityPreset(i);
@@ -400,6 +424,12 @@ boolean handlePageMousePressed() {
         mouseY > pointDensitySlider[1] - 10 && mouseY < pointDensitySlider[1] + 12) {
       dragPointDensitySlider = 1;
       atualizarSliderDensidadePontos();
+      return true;
+    }
+    if (mouseX > pointThicknessSlider[0] && mouseX < pointThicknessSlider[0] + pointThicknessSlider[2] &&
+        mouseY > pointThicknessSlider[1] - 10 && mouseY < pointThicknessSlider[1] + 12) {
+      dragPointThicknessSlider = 1;
+      atualizarSliderGrossuraPontos();
       return true;
     }
     for (int i = 0; i < meshDetailButtons.length; i++) {
@@ -705,6 +735,11 @@ boolean handlePageMousePressed() {
       }
     }
     if (dentroDoBotao(estampaCoresMarcaButton)) {
+      if (estampaGradienteAtivo()) {
+        estampaUsarCoresMarca = false;
+        mostrarStatus("Gradiente usa Cor 1, Cor 2 e Cor 3");
+        return true;
+      }
       estampaUsarCoresMarca = !estampaUsarCoresMarca;
       mostrarStatus(estampaUsarCoresMarca ? "Estampa usa cores da marca" : "Estampa usa cores manuais");
       return true;
@@ -713,7 +748,7 @@ boolean handlePageMousePressed() {
       if (dentroDoBotao(estampaColorButtons[i])) {
         estampaColorTarget = i;
         estampaUsarCoresMarca = false;
-        mostrarStatus("Cor da estampa: " + estampaColorLabels[i]);
+        mostrarStatus("Cor da estampa: " + labelCorEstampa(i));
         return true;
       }
     }
@@ -737,10 +772,10 @@ boolean handlePageMousePressed() {
       if (!videoEncoding) salvarEstampaMP4();
       return true;
     }
-    for (int i = 0; i < padraoFormaButtons.length; i++) {
+    for (int i = 0; i < estampaModoIndices.length; i++) {
       if (dentroDoBotao(padraoFormaButtons[i])) {
-        formaPadraoAtiva = i;
-        mostrarStatus("Estampa: " + estampaModoLabels[i]);
+        formaPadraoAtiva = estampaModoIndices[i];
+        mostrarStatus("Estampa: " + estampaModoLabels[formaPadraoAtiva]);
         return true;
       }
     }
@@ -757,6 +792,10 @@ boolean handlePageMousePressed() {
     if (dentroDoBotao(freezeBrandButton)) {
       if (mutationParams != null) mutationParams.freezeState = !mutationParams.freezeState;
       mostrarStatus(mutationParams != null && mutationParams.freezeState ? "Mutação congelada" : "Mutação liberada");
+      return true;
+    }
+    if (dentroDoBotao(exportFullscreenBrandButton)) {
+      alternarTelaCheiaMarca();
       return true;
     }
     for (int i = 0; i < exportPageButtons.length; i++) {
@@ -789,6 +828,20 @@ void executarAcaoExportacao(int opcaoIdx) {
   }
 }
 
+void alternarTelaCheiaMarca() {
+  modoMarcaTelaCheia = !modoMarcaTelaCheia;
+  if (modoMarcaTelaCheia) {
+    mostrarBarra = false;
+    mostrarBarraPadroes = false;
+    panfletoCampoAtivo = -1;
+    mostrarStatus("Tela cheia da marca. ESC ou F para sair");
+  } else {
+    mostrarBarra = true;
+    mostrarBarraPadroes = true;
+    mostrarStatus("Interface restaurada");
+  }
+}
+
 void randomizarEstampa() {
   padraoQtdFormas = random(8, 34);
   padraoEspacoX = random(36, 220);
@@ -798,11 +851,12 @@ void randomizarEstampa() {
   padraoRefY = random(-70, 70);
   padraoDiagonal = random(-110, 110);
   estampaPreviewAtivo = floor(random(0, estampaPreviewLabels.length));
-  formaPadraoAtiva = floor(random(0, estampaModoLabels.length));
+  formaPadraoAtiva = estampaModoIndices[floor(random(0, estampaModoIndices.length))];
   if (random(1) > 0.58) {
     estampaUsarCoresMarca = false;
     estampaCorA = corInterfacePaleta(floor(random(4)));
     estampaCorB = corInterfacePaleta(floor(random(4)));
+    estampaCorFundo = corInterfacePaleta(floor(random(4)));
   }
   mostrarStatus("Estampa gerada");
 }
@@ -816,7 +870,7 @@ void abrirColorPicker(int target) {
   colorPickerBri = hsb[2];
   colorPickerAberto = true;
   estampaUsarCoresMarca = false;
-  mostrarStatus("Escolha a cor: " + estampaColorLabels[target]);
+  mostrarStatus("Escolha a cor: " + labelCorEstampa(target));
 }
 
 boolean handleColorPickerMousePressed() {
@@ -853,6 +907,19 @@ void aplicarColorPicker() {
   if (colorPickerTarget == 0) estampaCorA = c;
   else if (colorPickerTarget == 1) estampaCorB = c;
   else estampaCorFundo = c;
+}
+
+boolean estampaGradienteAtivo() {
+  return formaPadraoAtiva == 24;
+}
+
+String labelCorEstampa(int idx) {
+  if (estampaGradienteAtivo()) {
+    if (idx == 0) return "Cor 1";
+    if (idx == 1) return "Cor 2";
+    return "Cor 3";
+  }
+  return estampaColorLabels[constrain(idx, 0, estampaColorLabels.length - 1)];
 }
 
 void resetarComposicaoPanfleto() {
@@ -910,6 +977,11 @@ void mouseDragged() {
 
   if (dragPointDensitySlider != -1) {
     atualizarSliderDensidadePontos();
+    return;
+  }
+
+  if (dragPointThicknessSlider != -1) {
+    atualizarSliderGrossuraPontos();
     return;
   }
 
@@ -1080,6 +1152,7 @@ void mouseReleased() {
   dragMarcaHsvSlider = -1;
   dragFrequencyInfluenceSlider = -1;
   dragPointDensitySlider = -1;
+  dragPointThicknessSlider = -1;
   dragSlider = -1;
   dragPadraoSlider = -1;
   dragEstampaHsvSlider = -1;
@@ -1099,6 +1172,14 @@ void atualizarSliderDensidadePontos() {
   if (activeBrand != null) activeBrand.maxRenderPoints = val;
   if (mutationParams != null) mutationParams.complexity = map(val, 150, 5200, 0.1, 1.0);
   mostrarStatus("Pontos: " + int(val));
+}
+
+void atualizarSliderGrossuraPontos() {
+  float t = constrain((mouseX - pointThicknessSlider[0]) / max(1, pointThicknessSlider[2]), 0, 1);
+  float val = pointThicknessSlider[3] + t * (pointThicknessSlider[4] - pointThicknessSlider[3]);
+  pointThicknessSlider[5] = val;
+  pointDotThickness = val;
+  mostrarStatus("Grossura dos pontos: " + nf(val, 1, 1));
 }
 
 float[] hsvAtualMarca() {
@@ -1414,6 +1495,17 @@ void atualizarEntradaGestual() {
 }
 
 void keyPressed() {
+  if (modoMarcaTelaCheia) {
+    if (key == ESC || key == 'f' || key == 'F') {
+      key = 0;
+      alternarTelaCheiaMarca();
+      return;
+    }
+  } else if ((key == 'f' || key == 'F') && appPage == 4) {
+    alternarTelaCheiaMarca();
+    return;
+  }
+
   if (panfletoFundoPaletaHexAtivo) {
     if (key == 22 || ((key == 'v' || key == 'V') && keyEvent != null && keyEvent.isControlDown())) {
       colarHexFundoPanfleto();

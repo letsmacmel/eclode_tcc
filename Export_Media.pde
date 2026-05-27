@@ -341,7 +341,8 @@ int[] tamanhoExportPanfleto() {
   if (panfletoFormatoAtivo == 1) return new int[] { 1754, 1240 };
   if (panfletoFormatoAtivo == 2) return new int[] { 1080, 1350 };
   if (panfletoFormatoAtivo == 3) return new int[] { 1080, 1920 };
-  if (panfletoFormatoAtivo == 4) return new int[] { 600, 1800 };
+  if (panfletoFormatoAtivo == 4) return new int[] { 1920, 1080 };
+  if (panfletoFormatoAtivo == 5) return new int[] { 1063, 591 };
   return new int[] { 1240, 1754 };
 }
 
@@ -402,13 +403,13 @@ boolean salvarMarcaSVGVetorial(String caminho) {
   float assetH = max(1, activeBrand.maxY - activeBrand.minY);
   float fit = min((width * 0.62) / assetW, (height * 0.54) / assetH);
   fit = constrain(fit, 0.04, 7.0);
-  int c = corMarcaRender(mutationParams, false);
+  int c = corMarcaRenderAjustada(mutationParams, false, 100);
 
   PGraphics svg = createGraphics(width, height, SVG, caminho);
   svg.beginDraw();
   svg.colorMode(RGB, 255, 255, 255, 255);
   svg.noStroke();
-  svg.fill(canalR(c), canalG(c), canalB(c), canalA(c) * constrain(mutationParams.opacityAmount, 0, 1));
+  svg.fill(canalR(c), canalG(c), canalB(c), canalA(c));
   svg.pushMatrix();
   svg.translate(width * 0.5, height * 0.5);
   svg.rotate(activeBrand.currentRotation);

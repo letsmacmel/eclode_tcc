@@ -1,4 +1,6 @@
 PGraphics estampaGradienteCache;
+PGraphics estampaGradienteBlurA;
+PGraphics estampaGradienteBlurB;
 int estampaGradienteCacheW = 0;
 int estampaGradienteCacheH = 0;
 
@@ -25,8 +27,20 @@ void renderShapeLayerContent(PGraphics pg, float seedValue, float floatTime, flo
   } else if (appPage == 3) {
     desenharEstampaArtistica(pg, seedValue, breathTime, scaleBase);
   } else if (brandSystemEnabled && activeBrand != null) {
+    if (limparFundo) {
+      pg.colorMode(RGB, 255, 255, 255, 255);
+      if (marcaFundoBranco) pg.background(255);
+      else pg.background(0);
+      pg.colorMode(HSB, 360, 100, 100, 100);
+    }
     activeBrand.render(pg, mutationParams, audioData, gestureData, seedValue, scaleBase);
   } else {
+    if (limparFundo) {
+      pg.colorMode(RGB, 255, 255, 255, 255);
+      if (marcaFundoBranco) pg.background(255);
+      else pg.background(0);
+      pg.colorMode(HSB, 360, 100, 100, 100);
+    }
     desenharPlaceholderMarca(pg);
   }
 }
@@ -85,7 +99,8 @@ void desenharEstampaArtistica(PGraphics pg, float seedValue, float breathTime, f
   float treble = audioData != null ? constrain(audioData.treble * 1.30, 0, 1.7) : 0;
   float t = noiseDynamicTime * (0.36 + treble * 0.30) + seedValue * 0.17;
 
-  int fundoEstampa = estampaUsarCoresMarca ? 0xFFEFEBE8 : estampaCorFundo;
+  int modo = constrain(formaPadraoAtiva, 0, estampaModoLabels.length - 1);
+  int fundoEstampa = (modo == 24 || !estampaUsarCoresMarca) ? estampaCorFundo : 0xFFEFEBE8;
   pg.noStroke();
   pg.fill(canalR(fundoEstampa), canalG(fundoEstampa), canalB(fundoEstampa), canalA(fundoEstampa));
   pg.rect(x, y, w, h);
@@ -106,7 +121,6 @@ void desenharEstampaArtistica(PGraphics pg, float seedValue, float breathTime, f
 
   pg.clip(round(x), round(y), round(w), round(h));
 
-  int modo = constrain(formaPadraoAtiva, 0, estampaModoLabels.length - 1);
   int density = constrain(round(padraoQtdFormas), 3, 28);
   float tileBase = max(10, min(w, h) * constrain(padraoEscala, 0.10, 1.05) * 0.20);
   float diagonal = padraoDiagonal * scaleBase;
@@ -114,9 +128,12 @@ void desenharEstampaArtistica(PGraphics pg, float seedValue, float breathTime, f
   float brandH = temMarca ? max(1, brand.maxY - brand.minY) : (texture != null ? texture.height : 100);
   float brandFit = min(w / brandW, h / brandH) * 0.78;
   float densityStep = max(1, temMarca ? brand.originalPoints.size() / max(80, density * 58) : 1);
-  int corA = mutationParams != null ? mutationParams.primaryColor : 0xFF14AA8E;
-  int corB = mutationParams != null ? mutationParams.secondaryColor : 0xFFF4485C;
-  if (!estampaUsarCoresMarca) {
+  int corA = mutationParams != null ? corMarcaRenderBaseAjustada(mutationParams, false) : 0xFF14AA8E;
+  int corB = mutationParams != null ? corMarcaRenderBaseAjustada(mutationParams, true) : 0xFFF4485C;
+  if (modo == 24) {
+    corA = estampaCorA;
+    corB = estampaCorB;
+  } else if (!estampaUsarCoresMarca) {
     corA = estampaCorA;
     corB = estampaCorB;
   }
@@ -131,13 +148,6 @@ void desenharEstampaArtistica(PGraphics pg, float seedValue, float breathTime, f
   float br = lerp(fundoR, canalR(corB), alphaB);
   float bg = lerp(fundoG, canalG(corB), alphaB);
   float bb = lerp(fundoB, canalB(corB), alphaB);
-  if (ar + ag + ab < 18) {
-    ar = 20; ag = 170; ab = 142;
-  }
-  if (br + bg + bb < 18) {
-    br = 244; bg = 72; bb = 92;
-  }
-
   float sangriaEstampa = modo == 24 ? 0 : max(max(padraoEspacoX, padraoEspacoY) * scaleBase * 0.55, min(w, h) * 0.16);
   sangriaEstampa = modo == 24 ? 0 : constrain(sangriaEstampa, 42 * scaleBase, min(w, h) * 0.34);
   desenharSistemaEstampaOrganica(pg, x - sangriaEstampa, y - sangriaEstampa, w + sangriaEstampa * 2.0, h + sangriaEstampa * 2.0, modo, density, scaleBase, seedValue, t, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca);
@@ -377,9 +387,9 @@ void desenharPadraoEditorialModular(PGraphics pg, float x, float y, float w, flo
 
 void desenharPadraoGradienteMalha(PGraphics pg, float x, float y, float w, float h, int density, float baseStep, float seedValue, float t, float energy, float bass, float mid, float treble, float ar, float ag, float ab, float br, float bg, float bb, MutableBrand brand, boolean temMarca) {
   float previewMax = max(w, h);
-  float bufferScale = constrain(260.0 / max(1, previewMax), 0.16, 0.32);
-  int gw = constrain(ceil(w * bufferScale), 72, 260);
-  int gh = constrain(ceil(h * bufferScale), 72, 260);
+  float bufferScale = constrain(220.0 / max(1, previewMax), 0.14, 0.28);
+  int gw = constrain(ceil(w * bufferScale), 64, 220);
+  int gh = constrain(ceil(h * bufferScale), 64, 220);
   if (estampaGradienteCache == null || estampaGradienteCacheW != gw || estampaGradienteCacheH != gh) {
     estampaGradienteCache = createGraphics(gw, gh, P2D);
     estampaGradienteCacheW = gw;
@@ -390,30 +400,55 @@ void desenharPadraoGradienteMalha(PGraphics pg, float x, float y, float w, float
   gradiente.beginDraw();
   gradiente.clear();
   gradiente.colorMode(RGB, 255, 255, 255, 255);
-  float tempo = t * (0.24 + treble * 0.045);
-  float flowAmp = 0.018 + energy * 0.010 + mid * 0.008;
-  int kernelCount = 3;
+  float tempo = t * (0.34 + treble * 0.055);
+  float flowAmp = 0.020 + energy * 0.012 + mid * 0.010;
+  int kernelCount = 7;
 
   gradiente.loadPixels();
   for (int yy = 0; yy < gh; yy++) {
     float v = yy / max(1.0, gh - 1.0);
     for (int xx = 0; xx < gw; xx++) {
       float u = xx / max(1.0, gw - 1.0);
-      float n1 = noise(u * 2.2 + seedValue * 0.21, v * 2.2 + 17.0, tempo * 0.55);
-      float n2 = noise(u * 4.8 + 31.0, v * 4.8 + seedValue * 0.17, tempo * 0.38);
-      float angle = noise(u * 1.4 + 70.0, v * 1.4 + 11.0, tempo * 0.28) * TWO_PI * 2.0;
-      float du = cos(angle) * (n1 - 0.5) * flowAmp + sin(v * TWO_PI * 1.2 + tempo) * bass * 0.010;
-      float dv = sin(angle) * (n2 - 0.5) * flowAmp + cos(u * TWO_PI * 1.1 - tempo) * treble * 0.006;
+      float n1 = noise(u * 0.95 + seedValue * 0.21, v * 0.95 + 17.0, tempo * 0.46);
+      float n2 = noise(u * 1.60 + 31.0, v * 1.60 + seedValue * 0.17, tempo * 0.40);
+      float angle = noise(u * 0.70 + 70.0, v * 0.70 + 11.0, tempo * 0.33) * TWO_PI * 2.0;
+      float du = cos(angle) * (n1 - 0.5) * flowAmp + sin(v * TWO_PI * 1.2 + tempo * 1.45) * bass * 0.020;
+      float dv = sin(angle) * (n2 - 0.5) * flowAmp + cos(u * TWO_PI * 1.1 - tempo * 1.25) * treble * 0.010;
       gradiente.pixels[yy * gw + xx] = corGradienteMalha(u + du, v + dv, seedValue, tempo, energy, bass, mid, treble, ar, ag, ab, br, bg, bb, brand, temMarca, kernelCount);
     }
   }
   gradiente.updatePixels();
+  desenharNuvensEsfumadasGradiente(gradiente, seedValue, tempo, energy, bass, mid, ar, ag, ab, br, bg, bb);
   gradiente.endDraw();
-  gradiente.filter(BLUR, 0.65);
+  PGraphics gradienteSuave = aplicarPixelFlowNoGradiente(gradiente, gw, gh, energy, bass, mid);
 
   pg.imageMode(CORNER);
-  pg.image(gradiente, x, y, w, h);
+  pg.image(gradienteSuave, x, y, w, h);
   desenharGranuladoGradienteMalha(pg, x, y, w, h, density, seedValue, tempo, energy, ar, ag, ab, br, bg, bb);
+}
+
+PGraphics aplicarPixelFlowNoGradiente(PGraphics src, int gw, int gh, float energy, float bass, float mid) {
+  int radius = constrain(round(8 + energy * 7 + bass * 6 + mid * 3), 8, 24);
+  if (pixelFlowReady && pixelFlowFilter != null && src instanceof PGraphicsOpenGL) {
+    try {
+      if (estampaGradienteBlurA == null || estampaGradienteBlurA.width != gw || estampaGradienteBlurA.height != gh) {
+        estampaGradienteBlurA = createGraphics(gw, gh, P2D);
+        estampaGradienteBlurB = createGraphics(gw, gh, P2D);
+        estampaGradienteBlurA.smooth(8);
+        estampaGradienteBlurB.smooth(8);
+      }
+      pixelFlowFilter.gaussblur.apply((PGraphicsOpenGL) src, (PGraphicsOpenGL) estampaGradienteBlurA, (PGraphicsOpenGL) estampaGradienteBlurB, radius);
+      pixelFlowFilter.gaussblur.apply((PGraphicsOpenGL) estampaGradienteBlurA, (PGraphicsOpenGL) estampaGradienteBlurA, (PGraphicsOpenGL) estampaGradienteBlurB, max(2, radius / 2));
+      return estampaGradienteBlurA;
+    } catch (Exception e) {
+      pixelFlowReady = false;
+      println("PixelFlow gradiente falhou: " + e.getMessage());
+    }
+  }
+  src.beginDraw();
+  src.filter(BLUR, radius * 0.45);
+  src.endDraw();
+  return src;
 }
 
 void desenharVerticeGradienteMalha(PGraphics pg, float x, float y, float w, float h, int gx, int gy, int cols, int rows, float seedValue, float tempo, float deform, float vib, float energy, float bass, float mid, float treble, float ar, float ag, float ab, float br, float bg, float bb, MutableBrand brand, boolean temMarca, int kernelCount) {
@@ -429,28 +464,38 @@ void desenharVerticeGradienteMalha(PGraphics pg, float x, float y, float w, floa
 }
 
 int corGradienteMalha(float u, float v, float seedValue, float tempo, float energy, float bass, float mid, float treble, float ar, float ag, float ab, float br, float bg, float bb, MutableBrand brand, boolean temMarca, int kernelCount) {
-  float baseN = noise(u * 1.35 + seedValue * 0.13, v * 1.20 + 8.0, tempo * 0.72);
-  float campo = campoOrganicoEstampa(u, v, tempo, brand, temMarca);
-  float r = lerp(ar, br, 0.36 + baseN * 0.22);
-  float g = lerp(ag, bg, 0.36 + baseN * 0.22);
-  float b = lerp(ab, bb, 0.36 + baseN * 0.22);
+  int corC = estampaCorFundo;
+  float cr = canalR(corC);
+  float cg = canalG(corC);
+  float cb = canalB(corC);
+  float baseN = noise(u * 0.52 + seedValue * 0.13, v * 0.50 + 8.0, tempo * 0.48);
+  float slowN = noise(u * 1.05 + 23.0, v * 1.00 + seedValue * 0.08, tempo * 0.34);
+  float campo = campoOrganicoEstampa(u, v, tempo * 0.70, brand, temMarca);
+  float wave = sin((u * 1.18 - v * 0.82) * PI + tempo * 1.55) * 0.10;
+  float diagonal = smoothstep(0.0, 1.0, (u * 0.50 + v * 0.50 + (baseN - 0.5) * 0.24 + wave));
+  float baseMix = diagonal * 0.44 + slowN * 0.34 + tempo * 0.085 + campo * 0.16;
+  float r = misturaTriGradiente(baseMix, ar, br, cr);
+  float g = misturaTriGradiente(baseMix, ag, bg, cg);
+  float b = misturaTriGradiente(baseMix, ab, bb, cb);
   float total = 1.0;
 
   for (int i = 0; i < kernelCount; i++) {
-    float phase = tempo * (0.26 + i * 0.055) + seedValue * 0.31 + i * 1.73;
-    float ku = 0.5 + cos(phase + i * 0.61) * (0.24 + 0.05 * sin(tempo + i));
-    float kv = 0.5 + sin(phase * 0.82 + i * 1.12) * (0.25 + 0.04 * cos(tempo * 0.7 + i));
-    ku += (noise(i * 3.7, tempo * 0.45) - 0.5) * (0.18 + mid * 0.06);
-    kv += (noise(i * 5.1 + 4.0, tempo * 0.38) - 0.5) * (0.18 + energy * 0.06);
+    float phase = tempo * (0.30 + i * 0.052) + seedValue * 0.31 + i * 1.73;
+    float orbit = 0.50 + 0.12 * sin(tempo * 0.42 + i);
+    float ku = 0.5 + cos(phase + i * 0.61) * orbit;
+    float kv = 0.5 + sin(phase * 0.78 + i * 1.12) * (orbit * 0.72);
+    ku += (noise(i * 3.7, tempo * 0.42) - 0.5) * (0.34 + mid * 0.12);
+    kv += (noise(i * 5.1 + 4.0, tempo * 0.38) - 0.5) * (0.34 + energy * 0.12);
     float dx = u - ku;
     float dy = v - kv;
-    float raio = 0.20 + noise(i * 0.7 + 2.0, tempo * 0.35) * 0.22 + bass * 0.060;
+    float raio = 0.46 + noise(i * 0.7 + 2.0, tempo * 0.32) * 0.46 + bass * 0.13;
     float d2 = (dx * dx + dy * dy) / max(0.0001, raio * raio);
-    float peso = exp(-d2 * (1.10 + i * 0.18));
-    float mix = fractEstampa(i * 0.37 + baseN * 0.34 + campo * 0.20 + tempo * 0.035);
-    float kr = lerp(ar, br, mix);
-    float kg = lerp(ag, bg, mix);
-    float kb = lerp(ab, bb, mix);
+    float peso = exp(-d2 * (0.25 + i * 0.030));
+    float mix = fractEstampa(i * 0.37 + baseN * 0.28 + campo * 0.24 + tempo * 0.090);
+    float colorPhase = mix + i * 0.333 + tempo * 0.110;
+    float kr = misturaTriGradiente(colorPhase, ar, br, cr);
+    float kg = misturaTriGradiente(colorPhase, ag, bg, cg);
+    float kb = misturaTriGradiente(colorPhase, ab, bb, cb);
     r += kr * peso;
     g += kg * peso;
     b += kb * peso;
@@ -460,25 +505,69 @@ int corGradienteMalha(float u, float v, float seedValue, float tempo, float ener
   r /= total;
   g /= total;
   b /= total;
-  float luz = 0.96 + campo * 0.10 + sin((u - v) * TWO_PI + tempo) * 0.018 + treble * 0.012;
+  float vignette = 1.0 - smoothstep(0.12, 0.98, dist(u, v, 0.50, 0.50));
+  float luz = 0.86 + campo * 0.11 + vignette * 0.16 + sin((u - v) * PI + tempo) * 0.006 + treble * 0.008;
   return corRGBA255(constrain(r * luz, 0, 255), constrain(g * luz, 0, 255), constrain(b * luz, 0, 255), 255);
 }
 
+float misturaTriGradiente(float t, float a, float b, float c) {
+  t = fractEstampa(t);
+  if (t < 0.333333) {
+    return lerp(a, b, smoothstep(0.0, 1.0, t * 3.0));
+  }
+  if (t < 0.666666) {
+    return lerp(b, c, smoothstep(0.0, 1.0, (t - 0.333333) * 3.0));
+  }
+  return lerp(c, a, smoothstep(0.0, 1.0, (t - 0.666666) * 3.0));
+}
+
+void desenharNuvensEsfumadasGradiente(PGraphics pg, float seedValue, float tempo, float energy, float bass, float mid, float ar, float ag, float ab, float br, float bg, float bb) {
+  pg.pushStyle();
+  pg.noStroke();
+  pg.blendMode(BLEND);
+  int corC = estampaCorFundo;
+  float cr = canalR(corC);
+  float cg = canalG(corC);
+  float cb = canalB(corC);
+  int camadas = 14;
+  for (int i = 0; i < camadas; i++) {
+    float n = noise(seedValue * 0.17 + i * 1.9, tempo * 0.30);
+    float phase = tempo * (0.18 + i * 0.018) + seedValue * 0.23 + i * 0.74;
+    float cx = pg.width * (0.50 + cos(phase) * (0.48 + mid * 0.06) + (noise(i * 1.7 + 12.0, tempo * 0.22) - 0.5) * 0.26);
+    float cy = pg.height * (0.50 + sin(phase * 0.84 + i) * (0.42 + energy * 0.06) + (noise(i * 2.1 + 27.0, tempo * 0.20) - 0.5) * 0.24);
+    float rw = pg.width * (0.52 + n * 0.76 + bass * 0.16);
+    float rh = pg.height * (0.46 + noise(i + 8.0, tempo * 0.24) * 0.70 + energy * 0.10);
+    float mix = noise(i * 0.4 + seedValue, tempo * 0.16);
+    float nr = misturaTriGradiente(mix + i * 0.22 + tempo * 0.025, ar, br, cr);
+    float ng = misturaTriGradiente(mix + i * 0.22 + tempo * 0.025, ag, bg, cg);
+    float nb = misturaTriGradiente(mix + i * 0.22 + tempo * 0.025, ab, bb, cb);
+    float a = 14 + n * 28 + mid * 12;
+    pg.fill(nr, ng, nb, a);
+    pg.ellipse(cx, cy, rw, rh);
+  }
+  pg.popStyle();
+}
+
 void desenharGranuladoGradienteMalha(PGraphics pg, float x, float y, float w, float h, int density, float seedValue, float tempo, float energy, float ar, float ag, float ab, float br, float bg, float bb) {
-  int total = constrain(round(w * h / 780.0) + density * 38, 420, 4200);
+  int total = constrain(round(w * h / 360.0) + density * 72, 900, 9800);
+  int corC = estampaCorFundo;
+  float cr = canalR(corC);
+  float cg = canalG(corC);
+  float cb = canalB(corC);
   pg.noStroke();
   for (int i = 0; i < total; i++) {
     float u = hash1D(i + floor(tempo * 7.0) * 13.0 + seedValue * 17.0, 211.0);
     float v = hash1D(i * 1.37 + floor(tempo * 5.0) * 19.0 + seedValue * 23.0, 307.0);
-    float n = noise(u * 18.0, v * 18.0, tempo);
-    float a = 14 + n * 34 + energy * 16;
-    float s = 0.55 + hash1D(i, 509.0) * 1.65;
-    if (i % 3 == 0) {
-      pg.fill(255, a * 0.52);
-    } else if (i % 3 == 1) {
-      pg.fill(0, a * 0.68);
+    float n = noise(u * 22.0, v * 22.0, tempo * 0.35);
+    float a = 18 + n * 42 + energy * 18;
+    float s = 0.42 + hash1D(i, 509.0) * 1.10;
+    if (i % 4 == 0) {
+      pg.fill(255, a * 0.46);
+    } else if (i % 4 == 1) {
+      pg.fill(0, a * 0.72);
     } else {
-      pg.fill(lerp(ar, br, n), lerp(ag, bg, n), lerp(ab, bb, n), a * 0.34);
+      float mix = n + hash1D(i, 719.0) * 0.24 + tempo * 0.018;
+      pg.fill(misturaTriGradiente(mix, ar, br, cr), misturaTriGradiente(mix, ag, bg, cg), misturaTriGradiente(mix, ab, bb, cb), a * 0.42);
     }
     pg.rect(x + u * w, y + v * h, s, s);
   }
@@ -1175,7 +1264,9 @@ void renderMutableBrand(PGraphics pg, MutableBrand brand, MutationParams params,
   } else if (params.mode == 9) {
     renderBrandPlush(pg, brand, params, fit, audio);
   } else if (params.mode == 10) {
-    renderBrandMeltLayer(pg, brand, params, fit, audio);
+    renderBrandVectorContourLayer(pg, brand, params, fit, audio);
+  } else if (params.mode == 11) {
+    renderBrandVeinNetworkLayer(pg, brand, params, fit, audio);
   } else if (params.mode == 17) {
     renderBrandTemporalTrailLayer(pg, brand, params, fit, audio);
   } else if (params.mode == 19) {
@@ -1230,7 +1321,9 @@ void renderMutableBrandEmPonto(PGraphics pg, MutableBrand brand, MutationParams 
   } else if (params.mode == 9) {
     renderBrandPlush(pg, brand, params, fit, audio);
   } else if (params.mode == 10) {
-    renderBrandMeltLayer(pg, brand, params, fit, audio);
+    renderBrandVectorContourLayer(pg, brand, params, fit, audio);
+  } else if (params.mode == 11) {
+    renderBrandVeinNetworkLayer(pg, brand, params, fit, audio);
   } else if (params.mode == 17) {
     renderBrandTemporalTrailLayer(pg, brand, params, fit, audio);
   } else if (params.mode == 19) {
@@ -1253,8 +1346,8 @@ void renderBrandOriginalCleanAlpha(PGraphics pg, MutableBrand brand, MutationPar
   if (brand.sourceImage != null) {
     pg.colorMode(RGB, 255, 255, 255, 255);
     pg.imageMode(CENTER);
-    int c = corMarcaRender(params, false);
-    pg.tint(canalR(c), canalG(c), canalB(c), canalA(c) * constrain(params.opacityAmount, 0, 1) * constrain(alphaPct, 0, 100) / 100.0);
+    int c = corMarcaRenderAjustada(params, false, alphaPct);
+    pg.tint(canalR(c), canalG(c), canalB(c), canalA(c));
     pg.image(brand.sourceImage, 0, 0);
     pg.noTint();
   } else if (brand.sourceShape != null) {
@@ -1295,7 +1388,7 @@ boolean renderBrandMaskDisplacement(PGraphics pg, MutableBrand brand, MutationPa
   float maxOffset = (gooey ? 18.0 : 7.0) * down * (0.45 + energy * 0.55 + bass * 0.35);
   float surfacePull = gooey ? 1.0 : 0.62;
 
-  int c = corMarcaRender(params, false);
+  int c = corMarcaRenderBaseAjustada(params, false);
   int rr = int(canalR(c));
   int gg = int(canalG(c));
   int bb = int(canalB(c));
@@ -1383,6 +1476,53 @@ void renderBrandNormalReactive(PGraphics pg, MutableBrand brand, MutationParams 
   if (brand.meshLogo != null && brand.meshLogo.render(pg, params, 100)) return;
   if (renderBrandMaskDisplacement(pg, brand, params, fit, audio, false)) return;
   renderBrandOriginalClean(pg, brand, params, fit);
+}
+
+boolean renderBrandVectorNormalUniform(PGraphics pg, MutableBrand brand, MutationParams params, float fit, AudioData audio) {
+  if (brand == null || brand.sourceShape == null || params == null) return false;
+  if (!(params.mode == 0 || params.mode == 12 || params.mode == 13)) return false;
+
+  float bass = audio != null ? constrain(audio.bass * params.bassInfluence, 0, 1.8) : 0;
+  float energy = audio != null ? constrain(audio.energy + audio.volume * 0.35, 0, 1.4) : 0;
+  float sw = brand.sourceShape.width > 1 ? brand.sourceShape.width : max(1, brand.maxX - brand.minX);
+  float sh = brand.sourceShape.height > 1 ? brand.sourceShape.height : max(1, brand.maxY - brand.minY);
+  float unit = max(sw, sh) / 500.0;
+  float x = -sw * 0.5;
+  float y = -sh * 0.5;
+
+  pg.pushStyle();
+  pg.shapeMode(CORNER);
+  pg.colorMode(RGB, 255, 255, 255, 255);
+  brand.sourceShape.disableStyle();
+  int c = corMarcaRenderAjustada(params, false, 100);
+  pg.noStroke();
+  pg.fill(canalR(c), canalG(c), canalB(c), canalA(c));
+
+  if (params.mode == 12) {
+    float grow = (1.5 + bass * 5.6 + energy * 2.2 + params.intensity * 0.8) * unit / max(0.001, fit);
+    int rings = constrain(round(5 + bass * 5 + params.intensity * 2), 5, 13);
+    for (int r = rings; r >= 1; r--) {
+      float rr = grow * r / float(rings);
+      int steps = max(10, round(12 + r * 1.5));
+      for (int k = 0; k < steps; k++) {
+        float a = TWO_PI * k / steps;
+        pg.shape(brand.sourceShape, x + cos(a) * rr, y + sin(a) * rr);
+      }
+    }
+    pg.shape(brand.sourceShape, x, y);
+  } else if (params.mode == 13) {
+    float shrink = constrain(1.0 - (bass * 0.016 + energy * 0.010) * constrain(params.intensity, 0, 2.0), 0.965, 1.0);
+    pg.pushMatrix();
+    pg.scale(shrink);
+    pg.shape(brand.sourceShape, x, y);
+    pg.popMatrix();
+  } else {
+    pg.shape(brand.sourceShape, x, y);
+  }
+
+  brand.sourceShape.enableStyle();
+  pg.popStyle();
+  return true;
 }
 
 void renderBrandNormalVectorFluid(PGraphics pg, MutableBrand brand, MutationParams params, float fit, AudioData audio) {
@@ -1543,7 +1683,7 @@ boolean renderBrandOriginalNormalWarp(PGraphics pg, MutableBrand brand, Mutation
   pg.colorMode(RGB, 255, 255, 255, 255);
   pg.noStroke();
   pg.textureMode(IMAGE);
-  int tintColor = corMarcaRender(params, false);
+  int tintColor = corMarcaRenderAjustada(params, false, 100);
   pg.tint(canalR(tintColor), canalG(tintColor), canalB(tintColor), min(canalA(tintColor), alpha));
 
   for (int y = 0; y < rows; y++) {
@@ -1637,6 +1777,7 @@ void renderBrandOriginalNormalSurface(PGraphics pg, MutableBrand brand, Mutation
   float mid = audioData != null ? constrain(audioData.mid * 1.25 * params.midInfluence, 0, 1.8) : 0;
   float treble = audioData != null ? constrain(audioData.treble * 1.1 * params.trebleInfluence, 0, 1.8) : 0;
   float stroke = max(0.45, (brand.currentStroke * 0.52 + bass * params.strokeAmount * 0.22 + treble * 0.45) / max(0.001, fit));
+  stroke *= escalaGrossuraLinhasDePontos();
   pg.strokeWeight(stroke);
 
   ArrayList<PVector> pontos = brand.currentPoints;
@@ -1679,6 +1820,7 @@ void renderBrandOrganicMass(PGraphics pg, MutableBrand brand, MutationParams par
   float mid = audioData != null ? constrain(audioData.mid * 1.25, 0, 1.4) : 0;
   float treble = audioData != null ? constrain(audioData.treble * 1.1, 0, 1.4) : 0;
   float d = max(1.2, (3.4 + brand.currentStroke * 1.35 + bass * 5.2 + energy * 3.4 + solid * 2.6) / max(0.001, fit));
+  d *= escalaGrossuraPontos();
 
   for (int i = 0; i < pontos.size(); i += stride) {
     int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
@@ -1715,6 +1857,7 @@ void renderBrandLiquid(PGraphics pg, MutableBrand brand, MutationParams params, 
   int pointCount = max(1, brand.currentPoints.size());
   float stepLen = max(2.2, span * (0.010 + params.noiseAmount * 0.004 + mid * 0.004) / max(0.001, fit));
   float weightBase = max(0.22, (0.34 + bass * 0.42) / max(0.001, fit));
+  weightBase *= escalaGrossuraLinhasDePontos();
 
   renderBrandRasterStrokes(pg, brand, params, fit, true, 7 + energy * 10);
 
@@ -1772,6 +1915,7 @@ void renderBrandPerlinGossamer(PGraphics pg, MutableBrand brand, MutationParams 
   float hairLength = span * constrain(0.075 + params.displacementAmount * 0.0018, 0.07, 0.22);
   float noiseScale = 0.0065 + params.noiseAmount * 0.0035;
   float hairWeight = constrain(0.22 + params.strokeAmount * 0.035, 0.2, 1.2) / max(0.001, fit);
+  hairWeight *= escalaGrossuraLinhasDePontos();
   float lineAlpha = constrain(18 + params.opacityAmount * 30, 14, 42);
   int densityLimit = 3;
   float curlStrength = 1.15 + params.noiseAmount * 0.85 + mid * 0.22;
@@ -1849,7 +1993,7 @@ void renderBrandGossamerMesh(PGraphics pg, MutableBrand brand, MutationParams pa
   float t = noiseDynamicTime * 0.12;
 
   applyBrandColor(pg, params, alphaLine, false, true);
-  pg.strokeWeight(constrain(0.18 + params.strokeAmount * 0.018, 0.2, 0.8) / max(0.001, fit));
+  pg.strokeWeight(constrain(0.18 + params.strokeAmount * 0.018, 0.2, 0.8) / max(0.001, fit) * escalaGrossuraLinhasDePontos());
 
   for (int i = 0; i < pointCount; i += stride) {
     PVector a = brand.originalPoints.get(i);
@@ -1935,11 +2079,11 @@ void renderBrandGooBase(PGraphics pg, MutableBrand brand, MutationParams params,
     pg.shape(brand.sourceShape, -brand.center.x, -brand.center.y);
     brand.sourceShape.enableStyle();
   } else if (brand.sourceImage != null) {
-    int c = corMarcaRender(params, secondary);
+    int c = corMarcaRenderAjustada(params, secondary, alpha);
     pg.pushStyle();
     pg.colorMode(RGB, 255, 255, 255, 255);
     pg.imageMode(CENTER);
-    pg.tint(canalR(c), canalG(c), canalB(c), min(canalA(c), alpha * constrain(params.opacityAmount, 0, 1)));
+    pg.tint(canalR(c), canalG(c), canalB(c), canalA(c));
     pg.image(brand.sourceImage, 0, 0);
     pg.noTint();
     pg.popStyle();
@@ -2016,7 +2160,7 @@ void renderLiquidSoberSilhouette(PGraphics pg, MutableBrand brand, MutationParam
     float ox = cos(a) * offset;
     float oy = sin(a * 0.87) * offset;
     float alpha = (pass == 0 ? 128 : (pass == 1 ? 48 : 26)) * params.opacityAmount;
-    int c = corMarcaRender(params, pass != 0);
+    int c = corMarcaRenderAjustada(params, pass != 0, alpha / max(0.001, constrain(params.opacityAmount, 0, 1)));
     pg.tint(canalR(c), canalG(c), canalB(c), min(canalA(c), alpha));
     pg.image(brand.sourceImage, ox, oy);
   }
@@ -2055,7 +2199,7 @@ boolean renderLiquidContinuousSurface(PGraphics pg, MutableBrand brand, Mutation
   pg.blendMode(BLEND);
   pg.noStroke();
   pg.textureMode(IMAGE);
-  int surfaceColor = corMarcaRender(params, false);
+  int surfaceColor = corMarcaRenderAjustada(params, false, (150 + solid * 42) / max(0.001, constrain(params.opacityAmount, 0, 1)));
   pg.tint(canalR(surfaceColor), canalG(surfaceColor), canalB(surfaceColor), min(canalA(surfaceColor), (150 + solid * 42) * params.opacityAmount));
 
   for (int y = 0; y < rows; y++) {
@@ -2113,7 +2257,7 @@ void renderLiquidFlowLines(PGraphics pg, MutableBrand brand, MutationParams para
   int stride = max(1, (int) ceil(brand.currentPoints.size() / max(360, brand.maxRenderPoints * 0.28)));
   float alpha = (12 + bass * 10 + mid * 8) * params.opacityAmount;
   pg.stroke(84, 142, 164, alpha);
-  pg.strokeWeight(max(0.22, (0.34 + bass * 0.34) / max(0.001, fit)));
+  pg.strokeWeight(max(0.22, (0.34 + bass * 0.34) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
   pg.strokeCap(ROUND);
 
   for (int i = 0; i < brand.currentPoints.size(); i += stride) {
@@ -2167,7 +2311,7 @@ void renderBrandRasterReference(PGraphics pg, MutableBrand brand, MutationParams
   }
   pg.translate(jitterX, jitterY);
   pg.scale(modePulse);
-  int c = corMarcaRender(params, false);
+  int c = corMarcaRenderAjustada(params, false, (175 + audio.energy * 80) / max(0.001, constrain(params.opacityAmount, 0, 1)));
   pg.tint(canalR(c), canalG(c), canalB(c), min(canalA(c), 175 + audio.energy * 80));
   pg.image(brand.sourceImage, 0, 0);
   pg.noTint();
@@ -2176,21 +2320,33 @@ void renderBrandRasterReference(PGraphics pg, MutableBrand brand, MutationParams
 }
 
 void applyBrandColor(PGraphics pg, MutationParams params, float alpha, boolean fillMode, boolean secondary) {
+  int out = corMarcaRenderAjustada(params, secondary, alpha);
+  pg.colorMode(RGB, 255, 255, 255, 255);
+  if (fillMode) pg.fill(canalR(out), canalG(out), canalB(out), canalA(out));
+  else pg.stroke(canalR(out), canalG(out), canalB(out), canalA(out));
+}
+
+int corMarcaRenderAjustada(MutationParams params, boolean secondary, float alphaPct) {
+  int base = corMarcaRenderBaseAjustada(params, secondary);
+  float alphaBase = canalA(base) / 255.0;
+  float opacidade = params != null ? constrain(params.opacityAmount, 0, 1) : 1;
+  float a = 255.0 * alphaBase * opacidade * constrain(alphaPct, 0, 100) / 100.0;
+  return corRGBA255(canalR(base), canalG(base), canalB(base), a);
+}
+
+int corMarcaRenderBaseAjustada(MutationParams params, boolean secondary) {
   int c = corMarcaRender(params, secondary);
   float[] hsb = java.awt.Color.RGBtoHSB(int(canalR(c)), int(canalG(c)), int(canalB(c)), null);
   float baseH = hsb[0] * 360.0;
   float baseS = hsb[1] * 100.0;
   float baseB = hsb[2] * 100.0;
   boolean corTravada = marcaPaletaTravada || baseS < 0.5 || baseB < 0.5 || baseB > 99.5;
-  float h = corTravada ? baseH : (baseH + params.hueAmount + semente * params.hueAmount * 0.08) % 360;
+  float hueAmount = params != null ? params.hueAmount : 0;
+  float saturationAmount = params != null ? params.saturationAmount : 1;
+  float h = corTravada ? baseH : (baseH + hueAmount + semente * hueAmount * 0.08) % 360;
   if (h < 0) h += 360;
-  float s = corTravada ? baseS : constrain(baseS * params.saturationAmount, 0, 100);
-  float b = baseB;
-  float a = alpha * constrain(params.opacityAmount, 0, 1);
-  int out = corHSBA(h, s, b, a);
-  pg.colorMode(RGB, 255, 255, 255, 255);
-  if (fillMode) pg.fill(canalR(out), canalG(out), canalB(out), canalA(out));
-  else pg.stroke(canalR(out), canalG(out), canalB(out), canalA(out));
+  float s = corTravada ? baseS : constrain(baseS * saturationAmount, 0, 100);
+  return corHSBA(h, s, baseB, canalA(c) / 255.0 * 100.0);
 }
 
 int corMarcaRender(MutationParams params, boolean secondary) {
@@ -2213,7 +2369,7 @@ void renderBrandFallback(PGraphics pg, MutableBrand brand, MutationParams params
   if (brand.sourceImage != null) {
     pg.colorMode(RGB, 255, 255, 255, 255);
     pg.imageMode(CENTER);
-    int c = corMarcaRender(params, false);
+    int c = corMarcaRenderAjustada(params, false, (90 + audio.energy * 165) / max(0.001, constrain(params.opacityAmount, 0, 1)));
     pg.tint(canalR(c), canalG(c), canalB(c), min(canalA(c), 90 + audio.energy * 165));
     pg.image(brand.sourceImage, 0, 0);
     pg.noTint();
@@ -2222,7 +2378,7 @@ void renderBrandFallback(PGraphics pg, MutableBrand brand, MutationParams params
     brand.sourceShape.disableStyle();
     pg.noFill();
     applyBrandColor(pg, params, 34 + audio.energy * 58, false, false);
-    pg.strokeWeight(max(0.5, brand.currentStroke / max(0.001, fit)));
+    pg.strokeWeight(max(0.5, brand.currentStroke / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     pg.shape(brand.sourceShape, -brand.center.x, -brand.center.y);
     brand.sourceShape.enableStyle();
   }
@@ -2242,7 +2398,7 @@ void renderBrandConnected(PGraphics pg, MutableBrand brand, MutationParams param
   pg.pushStyle();
   pg.noFill();
   applyBrandColor(pg, params, alpha, false, !currentSet);
-  pg.strokeWeight(max(0.45, brand.currentStroke / max(0.001, fit)));
+  pg.strokeWeight(max(0.45, brand.currentStroke / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
 
   ArrayList<PVector> pontos = currentSet ? brand.currentPoints : brand.originalPoints;
   int stride = max(1, (int) ceil(pontos.size() / brand.maxRenderPoints));
@@ -2275,7 +2431,7 @@ void renderBrandRasterStrokes(PGraphics pg, MutableBrand brand, MutationParams p
   pg.pushStyle();
   pg.noFill();
   applyBrandColor(pg, params, alpha, false, !currentSet);
-  pg.strokeWeight(max(0.35, brand.currentStroke / max(0.001, fit)));
+  pg.strokeWeight(max(0.35, brand.currentStroke / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
 
   ArrayList<PVector> pontos = currentSet ? brand.currentPoints : brand.originalPoints;
   int stride = max(1, (int) ceil(pontos.size() / brand.maxRenderPoints));
@@ -2284,6 +2440,7 @@ void renderBrandRasterStrokes(PGraphics pg, MutableBrand brand, MutationParams p
   float treble = audioData != null ? audioData.treble : 0;
   float bass = audioData != null ? constrain(audioData.bass * 1.35, 0, 1.4) : 0;
   float len = max(1.2, (2.4 + energy * 6.0 + bass * 7.0 + brand.currentStroke * 1.6) / max(0.001, fit));
+  len *= escalaGrossuraLinhasDePontos();
   for (int i = 0; i < pontos.size(); i += stride) {
     int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
     if (layer == 2 && solid < 0.50 && i % 4 != 0) continue;
@@ -2311,6 +2468,7 @@ void renderBrandPointDots(PGraphics pg, MutableBrand brand, MutationParams param
   float treble = audioData != null ? constrain(audioData.treble * 1.1, 0, 1.4) : 0;
   float solid = constrain(params.solidness, 0, 1);
   float dot = max(0.9, (1.2 + brand.currentStroke * 0.85 + energy * 2.1 + bass * 2.8 + treble * 1.5) / max(0.001, fit));
+  dot *= constrain(pointDotThickness, 0.35, 5.0);
   for (int i = 0; i < pontos.size(); i += stride) {
     int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
     if (layer == 2 && solid < 0.42 && i % 4 != 0) continue;
@@ -2329,6 +2487,7 @@ void renderBrandParticles(PGraphics pg, MutableBrand brand, MutationParams param
   pg.pushStyle();
   pg.noStroke();
   float dot = max(1.4, (2.2 + audio.energy * 3.0 + audio.bass * 4.5 + audio.treble * 2.8) / max(0.001, fit));
+  dot *= constrain(pointDotThickness, 0.35, 5.0);
   int stride = max(1, (int) ceil(brand.currentPoints.size() / brand.maxRenderPoints));
   float solid = constrain(params.solidness, 0, 1);
   for (int i = 0; i < brand.currentPoints.size(); i += stride) {
@@ -2379,7 +2538,7 @@ void renderBrandPlush(PGraphics pg, MutableBrand brand, MutationParams params, f
       float ox = o.x - brand.center.x;
       float oy = o.y - brand.center.y;
       float grain = noise(ox * 0.038 + 12.0, oy * 0.038 + 71.0, t + pass * 0.25);
-      float d = nap * sizeMul * (0.65 + grain * 0.42);
+      float d = nap * sizeMul * (0.65 + grain * 0.42) * escalaGrossuraPontos();
       float a = atan2(oy, ox) + HALF_PI + (grain - 0.5) * 1.1;
       pg.pushMatrix();
       pg.translate(p.x - brand.center.x, p.y - brand.center.y);
@@ -2395,7 +2554,7 @@ void renderBrandPlush(PGraphics pg, MutableBrand brand, MutationParams params, f
   for (int pass = 0; pass < 3; pass++) {
     boolean secondary = pass == 1;
     applyBrandColor(pg, params, pass == 2 ? 42 + treble * 22 : 24 + mid * 18, false, secondary);
-    pg.strokeWeight(max(0.28, (0.34 + pass * 0.10 + bass * 0.16) / max(0.001, fit)));
+    pg.strokeWeight(max(0.28, (0.34 + pass * 0.10 + bass * 0.16) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     for (int i = pass; i < brand.currentPoints.size(); i += hairStride) {
       int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
       if (layer == 2 && solid < 0.50 && i % 5 != 0) continue;
@@ -2456,7 +2615,7 @@ void renderBrandSoapBubbles(PGraphics pg, MutableBrand brand, MutationParams par
 
     if (popping) {
       float burst = map(popPhase, 0.72, 1.0, 0.35, 1.65);
-      pg.strokeWeight(max(0.25, (0.42 + treble * 0.24) / max(0.001, fit)));
+      pg.strokeWeight(max(0.25, (0.42 + treble * 0.24) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
       pg.stroke(190, 235, 255, (42 + treble * 42) * params.opacityAmount * (1.0 - min(1, burst * 0.45)));
       int shards = 5 + floor(hash1D(i, 44.0) * 4);
       for (int s = 0; s < shards; s++) {
@@ -2468,7 +2627,7 @@ void renderBrandSoapBubbles(PGraphics pg, MutableBrand brand, MutationParams par
       continue;
     }
 
-    pg.strokeWeight(max(0.28, (0.48 + bass * 0.20) / max(0.001, fit)));
+    pg.strokeWeight(max(0.28, (0.48 + bass * 0.20) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     pg.stroke(180, 230, 255, (36 + energy * 28) * params.opacityAmount);
     pg.ellipse(x, y, r * 2.0, r * (1.72 + n * 0.18));
     pg.stroke(255, 210, 245, (10 + treble * 18) * params.opacityAmount);
@@ -2557,6 +2716,14 @@ float intensidadeCamada(AudioData audio, MutationParams params) {
   return constrain((audio.energy + audio.volume * 0.38) * max(0.25, params.intensity), 0, 1.8);
 }
 
+float escalaGrossuraPontos() {
+  return constrain(pointDotThickness, 0.35, 5.0);
+}
+
+float escalaGrossuraLinhasDePontos() {
+  return lerp(1.0, escalaGrossuraPontos(), 0.48);
+}
+
 boolean pontoInternoProtegido(MutableBrand brand, int idx, float centerProtection) {
   int layer = brand.pointLayer.size() > idx ? brand.pointLayer.get(idx) : 1;
   return layer == 2 && hash1D(idx, 37.0) > (0.22 + centerProtection * 0.42);
@@ -2569,7 +2736,7 @@ void renderBrandStructuralTrace(PGraphics pg, MutableBrand brand, MutationParams
   pg.strokeCap(ROUND);
   pg.strokeJoin(ROUND);
   applyBrandColor(pg, params, alpha, false, false);
-  pg.strokeWeight(max(0.24, (0.32 + params.strokeAmount * 0.025) / max(0.001, fit)));
+  pg.strokeWeight(max(0.24, (0.32 + params.strokeAmount * 0.025) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
 
   ArrayList<PVector> pontos = currentSet ? brand.currentPoints : brand.originalPoints;
   int stride = max(1, (int) ceil(pontos.size() / max(420, brand.maxRenderPoints * 0.50)));
@@ -2623,7 +2790,7 @@ void renderBrandFlowPerlinControlled(PGraphics pg, MutableBrand brand, MutationP
   for (int pass = 0; pass < 3; pass++) {
     boolean secondary = pass == 1;
     applyBrandColor(pg, params, pass == 0 ? 24 + mid * 18 : (pass == 1 ? 34 + bass * 22 : 52 + treble * 24), false, secondary);
-    pg.strokeWeight(max(0.20, (0.26 + pass * 0.10 + treble * 0.10) / max(0.001, fit)));
+    pg.strokeWeight(max(0.20, (0.26 + pass * 0.10 + treble * 0.10) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     for (int i = pass; i < brand.originalPoints.size(); i += stride) {
       if (pontoInternoProtegido(brand, i, centerProtection)) continue;
       PVector o = brand.originalPoints.get(i);
@@ -2669,30 +2836,30 @@ void renderBrandSandStructured(PGraphics pg, MutableBrand brand, MutationParams 
   float energy = intensidadeCamada(audio, params);
   float span = brand.span();
   float unit = span / 500.0;
-  float t = noiseDynamicTime * (0.46 + params.transformSpeed * 0.18);
+  float t = noiseDynamicTime * (0.34 + params.transformSpeed * 0.10);
 
-  int coreTarget = constrain(round(780 + params.complexity * 1600 + energy * 520), 680, 3000);
+  int coreTarget = constrain(round(980 + params.complexity * 1500 + energy * 420), 850, 3100);
   int coreStride = max(1, (int) ceil(brand.originalPoints.size() / float(coreTarget)));
-  float coreRadius = (34 + bass * 34 + params.displacementAmount * 0.48) * unit / max(0.001, fit);
-  float outerRadius = (78 + bass * 55 + mid * 28 + params.displacementAmount * 0.70) * unit / max(0.001, fit);
-  float dryRadius = (95 + treble * 42 + params.noiseAmount * 20) * unit / max(0.001, fit);
+  float coreRadius = (10 + bass * 11 + params.displacementAmount * 0.08) * unit;
+  float outerRadius = (22 + bass * 18 + mid * 10 + params.displacementAmount * 0.12) * unit;
 
-  // Nucleo legivel: a forma e recomposta por graos densos, nao por uma copia do SVG.
-  applyBrandColor(pg, params, 78 + energy * 22, true, false);
+  // Pontos mais legiveis: a silhueta do SVG aparece por grana controlada.
+  applyBrandColor(pg, params, 82 + energy * 16, true, false);
   for (int i = 0; i < brand.currentPoints.size(); i += coreStride) {
     int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
     PVector p = brand.currentPoints.get(i);
     float n = noise(p.x * 0.025 + 3.0, p.y * 0.025 + 9.0, t);
-    float size = (layer == 0 ? 1.45 : (layer == 2 ? 1.05 : 1.22)) * (0.72 + n * 0.55);
-    size *= (1.05 + bass * 0.18) / max(0.001, fit);
-    pg.ellipse(p.x - brand.center.x, p.y - brand.center.y, max(0.85, size), max(0.70, size * 0.82));
+    float size = (layer == 0 ? 2.35 : (layer == 2 ? 1.35 : 1.75)) * (0.82 + n * 0.34);
+    size *= (1.0 + bass * 0.12) / max(0.001, fit);
+    size *= escalaGrossuraPontos();
+    pg.ellipse(p.x - brand.center.x, p.y - brand.center.y, max(1.15, size), max(1.0, size * 0.90));
   }
 
-  int edgeTarget = constrain(round(360 + params.complexity * 720 + energy * 240), 300, 1500);
+  int edgeTarget = constrain(round(280 + params.complexity * 520 + energy * 150), 240, 1050);
   int edgeStride = max(1, (int) ceil(brand.originalPoints.size() / float(edgeTarget)));
 
-  // Passada 1: massa escura e macia grudada na borda.
-  applyBrandColor(pg, params, 48 + bass * 28 + energy * 18, true, false);
+  // Borda mais marcada, com poucos satelites para nao virar poeira ilegivel.
+  applyBrandColor(pg, params, 68 + bass * 18 + energy * 12, true, false);
   for (int i = 0; i < brand.originalPoints.size(); i += edgeStride) {
     int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
     if (layer == 2) continue;
@@ -2700,62 +2867,45 @@ void renderBrandSandStructured(PGraphics pg, MutableBrand brand, MutationParams 
     PVector o = brand.originalPoints.get(i);
     PVector normal = brand.normalAproximadaDoPonto(i, o);
     PVector tangent = new PVector(-normal.y, normal.x);
-    int count = 5 + round(energy * 4);
+    int count = 2 + round(energy * 2);
     for (int j = 0; j < count; j++) {
       float h0 = hash1D(i * 13.0 + j * 7.0 + floor(t * 18.0), 101.0);
       float h1 = hash1D(i * 17.0 + j * 11.0, 151.0);
-      float dist = pow(h0, 2.25) * coreRadius;
+      float dist = pow(h0, 1.9) * coreRadius;
       float angle = h1 * TWO_PI + sin(t + i * 0.011) * mid * 0.28;
       float nx = cos(angle) * 0.55 + normal.x * 0.90 + tangent.x * sin(angle) * 0.35;
       float ny = sin(angle) * 0.55 + normal.y * 0.90 + tangent.y * sin(angle) * 0.35;
       float x = p.x - brand.center.x + nx * dist;
       float y = p.y - brand.center.y + ny * dist;
-      float s = (1.7 + hash1D(i + j, 231.0) * 3.2 + bass * 0.8) / max(0.001, fit);
+      float s = (2.0 + hash1D(i + j, 231.0) * 2.2 + bass * 0.5) / max(0.001, fit);
+      s *= escalaGrossuraPontos();
       pg.ellipse(x, y, s, s * (0.72 + hash1D(i + j, 233.0) * 0.42));
     }
   }
 
-  // Passada 2: poeira externa mais espalhada, com menos peso.
-  applyBrandColor(pg, params, 30 + mid * 18 + energy * 12, true, true);
-  for (int i = 0; i < brand.originalPoints.size(); i += edgeStride * 2) {
+  applyBrandColor(pg, params, 28 + mid * 16 + energy * 10, true, true);
+  for (int i = 0; i < brand.originalPoints.size(); i += edgeStride * 3) {
     int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
     if (layer == 2) continue;
     PVector p = brand.currentPoints.get(i);
     PVector o = brand.originalPoints.get(i);
     PVector normal = brand.normalAproximadaDoPonto(i, o);
     PVector tangent = new PVector(-normal.y, normal.x);
-    int count = 3 + round(energy * 3);
+    int count = 1 + round(energy * 2);
     for (int j = 0; j < count; j++) {
       float h0 = hash1D(i * 19.0 + j * 5.0 + floor(t * 11.0), 307.0);
       float h1 = hash1D(i * 23.0 + j * 13.0, 401.0);
       float dist = pow(h0, 1.45) * outerRadius;
-      float side = h1 > 0.38 ? 1.0 : -0.55;
+      float side = h1 > 0.40 ? 1.0 : -0.35;
       float x = p.x - brand.center.x + normal.x * dist * side + tangent.x * (h1 - 0.5) * outerRadius * 0.42;
       float y = p.y - brand.center.y + normal.y * dist * side + tangent.y * (h1 - 0.5) * outerRadius * 0.42;
-      float s = (0.9 + hash1D(i + j, 503.0) * 2.2 + bass * 0.4) / max(0.001, fit);
+      float s = (1.0 + hash1D(i + j, 503.0) * 1.4 + bass * 0.25) / max(0.001, fit);
+      s *= escalaGrossuraPontos();
       pg.ellipse(x, y, s, s);
     }
   }
 
-  // Passada 3: micropontos secos e irregulares.
-  applyBrandColor(pg, params, 44 + treble * 24, true, false);
-  for (int i = 0; i < brand.originalPoints.size(); i += edgeStride * 3) {
-    int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
-    if (layer == 2) continue;
-    PVector p = brand.currentPoints.get(i);
-    for (int j = 0; j < 5; j++) {
-      float h0 = hash1D(i * 29.0 + j * 17.0 + floor(t * 9.0), 607.0);
-      float h1 = hash1D(i * 31.0 + j * 19.0, 701.0);
-      float dist = lerp(coreRadius * 0.25, dryRadius, h0);
-      float angle = h1 * TWO_PI;
-      float x = p.x - brand.center.x + cos(angle) * dist;
-      float y = p.y - brand.center.y + sin(angle) * dist;
-      float s = (0.55 + hash1D(i + j, 809.0) * 1.25 + treble * 0.28) / max(0.001, fit);
-      pg.ellipse(x, y, s, s);
-    }
-  }
-
-  renderBrandStructuralTrace(pg, brand, params, fit, 18 + bass * 10, true, true);
+  renderBrandStructuralTrace(pg, brand, params, fit, 26 + bass * 12, true, true);
   pg.popStyle();
 }
 
@@ -2782,7 +2932,7 @@ void renderBrandStructuredFilaments(PGraphics pg, MutableBrand brand, MutationPa
   for (int pass = 0; pass < 3; pass++) {
     boolean secondary = pass == 1;
     applyBrandColor(pg, params, pass == 0 ? 18 + energy * 16 : (pass == 1 ? 36 + mid * 24 : 60 + treble * 24), false, secondary);
-    pg.strokeWeight(max(0.18, (0.24 + pass * 0.10 + bass * 0.08) / max(0.001, fit)));
+    pg.strokeWeight(max(0.18, (0.24 + pass * 0.10 + bass * 0.08) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     for (int i = pass; i < brand.originalPoints.size(); i += stride) {
       int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
       if (layer == 2 && i % 4 != 0) continue;
@@ -2809,112 +2959,124 @@ void renderBrandStructuredFilaments(PGraphics pg, MutableBrand brand, MutationPa
   pg.popStyle();
 }
 
-void renderBrandMeltLayer(PGraphics pg, MutableBrand brand, MutationParams params, float fit, AudioData audio) {
+void renderBrandVectorContourLayer(PGraphics pg, MutableBrand brand, MutationParams params, float fit, AudioData audio) {
   if (brand == null || !brand.hasPointData) return;
 
   pg.pushStyle();
   pg.noFill();
   pg.strokeCap(ROUND);
   pg.strokeJoin(ROUND);
-  pg.ellipseMode(CENTER);
-
-  float bass = audio != null ? constrain(audio.bass * params.bassInfluence * 1.45, 0, 1.8) : 0;
+  float bass = audio != null ? constrain(audio.bass * params.bassInfluence * 1.20, 0, 1.8) : 0;
   float mid = audio != null ? constrain(audio.mid * params.midInfluence * 1.25, 0, 1.8) : 0;
-  float treble = audio != null ? constrain(audio.treble * params.trebleInfluence * 1.10, 0, 1.8) : 0;
+  float treble = audio != null ? constrain(audio.treble * params.trebleInfluence * 1.15, 0, 1.8) : 0;
   float energy = intensidadeCamada(audio, params);
   float span = brand.span();
   float unit = span / 500.0;
-  float t = noiseDynamicTime * (0.16 + params.transformSpeed * 0.06);
+  float t = noiseDynamicTime * (0.18 + params.transformSpeed * 0.08);
+  int stride = max(1, (int) ceil(brand.currentPoints.size() / max(900, brand.maxRenderPoints * 0.80)));
 
-  int coreTarget = constrain(round(900 + params.complexity * 1200 + energy * 300), 760, 2300);
-  int coreStride = max(1, (int) ceil(brand.currentPoints.size() / float(coreTarget)));
-
-  // Corpo espesso e estavel: sem fios explosivos, sem pontos saindo para todo lado.
-  pg.noStroke();
-  applyBrandColor(pg, params, 88 + energy * 10, true, false);
-  for (int i = 0; i < brand.currentPoints.size(); i += coreStride) {
-    int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
-    PVector p = brand.currentPoints.get(i);
-    float n = noise(p.x * 0.018 + 12.0, p.y * 0.018 + 7.0, t);
-    float d = (layer == 0 ? 1.35 : (layer == 2 ? 1.05 : 1.18));
-    d *= (1.0 + bass * 0.14 + n * 0.16) / max(0.001, fit);
-    pg.ellipse(p.x - brand.center.x, p.y - brand.center.y, d, d * (0.86 + n * 0.18));
-  }
-
-  renderBrandStructuralTrace(pg, brand, params, fit, 62 + energy * 12, true, true);
-
-  int edgeTarget = constrain(round(58 + params.complexity * 84 + bass * 28), 46, 170);
-  int edgeStride = max(1, (int) ceil(brand.originalPoints.size() / float(edgeTarget)));
-  float baseLen = (9 + bass * 14 + params.displacementAmount * 0.06) * unit;
-  float maxLen = (22 + bass * 30 + mid * 12) * unit;
-
-  for (int pass = 0; pass < 2; pass++) {
-    boolean secondary = pass == 0;
-    float alpha = pass == 0 ? 38 + energy * 14 : 88;
+  for (int pass = -2; pass <= 3; pass++) {
+    boolean secondary = pass % 2 != 0;
+    float alpha = 30 + energy * 18 + (3 - abs(pass)) * 8;
     applyBrandColor(pg, params, alpha, false, secondary);
-    pg.strokeWeight(max(0.72, (pass == 0 ? 2.8 : 5.6) / max(0.001, fit)));
-
-    for (int i = pass; i < brand.originalPoints.size(); i += edgeStride) {
+    pg.strokeWeight(max(0.26, (0.44 + abs(pass) * 0.20 + bass * 0.12) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
+    boolean drawing = false;
+    PVector previous = null;
+    pg.beginShape();
+    for (int i = abs(pass) % stride; i < brand.currentPoints.size(); i += stride) {
       int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
       if (layer == 2) continue;
       PVector o = brand.originalPoints.get(i);
       PVector p = brand.currentPoints.get(i);
+      boolean shouldBreak = brand.breakBefore.size() > i && brand.breakBefore.get(i);
+      if (!shouldBreak && previous != null && PVector.dist(previous, o) > span * 0.040) shouldBreak = true;
+      if (shouldBreak && drawing) {
+        pg.endShape();
+        pg.beginShape();
+      }
       PVector normal = brand.normalAproximadaDoPonto(i, o);
-      float gate = hash1D(i + pass * 31.0, 51.0);
-      if (gate > 0.34 + bass * 0.10 + params.complexity * 0.10) continue;
-      if (normal.y < -0.15 && smoothstep(brand.minY, brand.maxY, o.y) < 0.45) continue;
-
-      float n = noise(o.x * 0.010 + pass * 9.0, o.y * 0.010 + 17.0, t);
-      float downward = smoothstep(brand.minY, brand.maxY, o.y) * 0.42 + 0.58;
-      float len = lerp(baseLen, maxLen, pow(gate, 1.65)) * downward * (0.70 + n * 0.62);
-      len = min(len, span * 0.105);
-      float side = (hash1D(i, 99.0) - 0.5) * (3.0 + mid * 4.0) * unit;
-      float x = p.x - brand.center.x;
-      float y = p.y - brand.center.y;
-      float pull = 0.86 + max(0, normal.y) * 0.22;
-
-      pg.beginShape();
-      for (int k = 0; k < 6; k++) {
-        float q = k / 5.0;
-        float wave = sin(q * PI * 1.1 + t * 4.0 + i * 0.027) * side * q;
-        float px = x + wave;
-        float py = y + len * q * pull + sin(q * TWO_PI + n * 4.0) * treble * unit * 0.55;
-        pg.curveVertex(px, py);
-      }
-      pg.endShape();
-
-      if (pass == 1 && gate < 0.20 + bass * 0.06) {
-        pg.noStroke();
-        applyBrandColor(pg, params, 82, true, false);
-        float drop = (2.0 + hash1D(i, 123.0) * 4.0 + bass * 1.8) / max(0.001, fit);
-        pg.ellipse(x + side * 0.55, y + len * pull, drop * 0.72, drop * 1.15);
-        pg.noFill();
-        applyBrandColor(pg, params, alpha, false, secondary);
-        pg.strokeWeight(max(0.72, 5.6 / max(0.001, fit)));
-      }
+      float n = noise(o.x * 0.010 + pass * 9.0, o.y * 0.010 + 37.0, t);
+      float offset = pass * (2.6 + bass * 2.8) * unit + (n - 0.5) * (2.8 + mid * 5.0) * unit;
+      pg.curveVertex(p.x - brand.center.x + normal.x * offset,
+                     p.y - brand.center.y + normal.y * offset);
+      drawing = true;
+      previous = o;
     }
+    pg.endShape();
   }
 
-  // Borda cromatica, como um contorno aquecido do derretimento.
-  pg.noFill();
-  applyBrandColor(pg, params, 48 + energy * 18, false, true);
-  pg.strokeWeight(max(0.32, (0.62 + treble * 0.16) / max(0.001, fit)));
-  int contourStride = max(1, (int) ceil(brand.currentPoints.size() / max(640, brand.maxRenderPoints * 0.60)));
-  pg.beginShape();
-  for (int i = 0; i < brand.currentPoints.size(); i += contourStride) {
+  int dotTarget = constrain(round(180 + params.complexity * 260 + treble * 100), 140, 560);
+  int dotStride = max(1, (int) ceil(brand.currentPoints.size() / float(dotTarget)));
+  pg.noStroke();
+  applyBrandColor(pg, params, 42 + treble * 28, true, false);
+  for (int i = 0; i < brand.currentPoints.size(); i += dotStride) {
     int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
     if (layer == 2) continue;
-    if (brand.breakBefore.size() > i && brand.breakBefore.get(i) && i > 0) {
-      pg.endShape();
-      pg.beginShape();
-    }
     PVector p = brand.currentPoints.get(i);
-    PVector o = brand.originalPoints.get(i);
-    PVector normal = brand.normalAproximadaDoPonto(i, o);
-    float bleed = (0.8 + bass * 1.1) * unit;
-    pg.curveVertex(p.x - brand.center.x + normal.x * bleed, p.y - brand.center.y + normal.y * bleed);
+    float s = (1.2 + hash1D(i, 224.0) * 1.8 + bass * 0.4) / max(0.001, fit);
+    s *= escalaGrossuraPontos();
+    pg.ellipse(p.x - brand.center.x, p.y - brand.center.y, s, s);
   }
-  pg.endShape();
+
+  pg.popStyle();
+}
+
+void renderBrandVeinNetworkLayer(PGraphics pg, MutableBrand brand, MutationParams params, float fit, AudioData audio) {
+  if (brand == null || !brand.hasPointData) return;
+
+  pg.pushStyle();
+  pg.noFill();
+  pg.strokeCap(ROUND);
+  pg.strokeJoin(ROUND);
+  float bass = audio != null ? constrain(audio.bass * params.bassInfluence * 1.12, 0, 1.8) : 0;
+  float mid = audio != null ? constrain(audio.mid * params.midInfluence * 1.35, 0, 1.8) : 0;
+  float treble = audio != null ? constrain(audio.treble * params.trebleInfluence * 1.20, 0, 1.8) : 0;
+  float energy = intensidadeCamada(audio, params);
+  float span = brand.span();
+  float maxDist = span * (0.028 + params.complexity * 0.016 + bass * 0.006);
+  int target = constrain(round(260 + params.complexity * 540 + energy * 160), 220, 840);
+  int stride = max(1, (int) ceil(brand.currentPoints.size() / float(target)));
+
+  renderBrandStructuralTrace(pg, brand, params, fit, 24 + energy * 12, true, true);
+  applyBrandColor(pg, params, 36 + mid * 32, false, false);
+  pg.strokeWeight(max(0.28, (0.42 + treble * 0.14) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
+
+  for (int i = 0; i < brand.currentPoints.size(); i += stride) {
+    PVector a = brand.currentPoints.get(i);
+    int layerA = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
+    int links = 0;
+    for (int j = i + stride; j < min(brand.currentPoints.size(), i + stride * 30) && links < 3; j += stride) {
+      int layerB = brand.pointLayer.size() > j ? brand.pointLayer.get(j) : 1;
+      PVector b = brand.currentPoints.get(j);
+      float d = PVector.dist(a, b);
+      if (d < span * 0.010 || d > maxDist) continue;
+      if (layerA == 2 && layerB == 2 && hash1D(i + j, 30.0) < 0.55) continue;
+      PVector midp = PVector.lerp(a, b, 0.5);
+      PVector dir = PVector.sub(b, a);
+      if (dir.mag() < 0.001) continue;
+      dir.normalize();
+      PVector n = new PVector(-dir.y, dir.x);
+      float pulse = sin(noiseDynamicTime * (1.7 + mid) + i * 0.019 + j * 0.007) * span * 0.0035 * (0.4 + bass);
+      pg.beginShape();
+      pg.curveVertex(a.x - brand.center.x, a.y - brand.center.y);
+      pg.curveVertex(midp.x - brand.center.x + n.x * pulse, midp.y - brand.center.y + n.y * pulse);
+      pg.curveVertex(b.x - brand.center.x, b.y - brand.center.y);
+      pg.endShape();
+      links++;
+    }
+  }
+
+  pg.noStroke();
+  applyBrandColor(pg, params, 54 + energy * 28, true, true);
+  int nodeStride = max(stride, stride * 2);
+  for (int i = 0; i < brand.currentPoints.size(); i += nodeStride) {
+    int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
+    if (layer == 2 && i % 4 != 0) continue;
+    PVector p = brand.currentPoints.get(i);
+    float s = (1.0 + bass * 0.8 + hash1D(i, 61.0) * 1.4) / max(0.001, fit);
+    s *= escalaGrossuraPontos();
+    pg.ellipse(p.x - brand.center.x, p.y - brand.center.y, s, s);
+  }
 
   pg.popStyle();
 }
@@ -2939,7 +3101,7 @@ void renderBrandDiffusionExpansion(PGraphics pg, MutableBrand brand, MutationPar
   int stride = max(1, (int) ceil(brand.originalPoints.size() / float(emitters)));
   for (int pass = 0; pass < 5; pass++) {
     applyBrandColor(pg, params, (52 - pass * 4 + energy * 24) * params.opacityAmount, false, pass % 2 == 1);
-    pg.strokeWeight(max(0.34, (0.56 + pass * 0.12 + bass * 0.20) / max(0.001, fit)));
+    pg.strokeWeight(max(0.34, (0.56 + pass * 0.12 + bass * 0.20) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     float radius = (pass + 1) * (2.4 + bass * 4.0 + energy * 1.6) * unit / max(0.001, fit);
     for (int i = pass; i < brand.originalPoints.size(); i += stride) {
       int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
@@ -2980,7 +3142,7 @@ void renderBrandHaloLayer(PGraphics pg, MutableBrand brand, MutationParams param
   int stride = max(1, (int) ceil(brand.originalPoints.size() / max(560, brand.maxRenderPoints * 0.62)));
   for (int pass = 0; pass < 8; pass++) {
     applyBrandColor(pg, params, 42 - pass * 3 + energy * 18, false, pass % 2 == 1);
-    pg.strokeWeight(max(0.32, (0.46 + pass * 0.13 + bass * 0.10) / max(0.001, fit)));
+    pg.strokeWeight(max(0.32, (0.46 + pass * 0.13 + bass * 0.10) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     float expand = (pass + 1) * (2.2 + bass * 4.8) * unit / max(0.001, fit);
     pg.beginShape();
     for (int i = pass; i < brand.originalPoints.size(); i += stride) {
@@ -3001,7 +3163,7 @@ void renderBrandHaloLayer(PGraphics pg, MutableBrand brand, MutationParams param
   int rays = constrain(round(120 + params.complexity * 260 + energy * 90), 100, 480);
   int rayStride = max(1, (int) ceil(brand.originalPoints.size() / float(rays)));
   applyBrandColor(pg, params, 34 + energy * 28, false, false);
-  pg.strokeWeight(max(0.26, (0.34 + treble * 0.18) / max(0.001, fit)));
+  pg.strokeWeight(max(0.26, (0.34 + treble * 0.18) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
   for (int i = 0; i < brand.originalPoints.size(); i += rayStride) {
     int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
     if (layer == 2) continue;
@@ -3033,7 +3195,7 @@ void renderBrandMembraneLayer(PGraphics pg, MutableBrand brand, MutationParams p
 
   renderBrandStructuralTrace(pg, brand, params, fit, 46 + energy * 16, true, true);
   applyBrandColor(pg, params, 44 + mid * 30, false, false);
-  pg.strokeWeight(max(0.30, (0.48 + treble * 0.18) / max(0.001, fit)));
+  pg.strokeWeight(max(0.30, (0.48 + treble * 0.18) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
   for (int i = 0; i < brand.currentPoints.size(); i += stride) {
     PVector a = brand.currentPoints.get(i);
     int layerA = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
@@ -3098,7 +3260,7 @@ void renderBrandCellsLayer(PGraphics pg, MutableBrand brand, MutationParams para
     float radius = (3.2 + n * 7.4 + bass * 4.4 + (layer == 2 ? 2.0 : 0.0)) * unit / max(0.001, fit);
     float wobble = (0.16 + mid * 0.16 + treble * 0.08);
     applyBrandColor(pg, params, 44 + energy * 30, false, i % 2 == 0);
-    pg.strokeWeight(max(0.42, (0.62 + bass * 0.14) / max(0.001, fit)));
+    pg.strokeWeight(max(0.42, (0.62 + bass * 0.14) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     pg.beginShape();
     int sides = 7 + int(hash1D(i, 42.0) * 4);
     for (int k = 0; k <= sides; k++) {
@@ -3140,7 +3302,7 @@ void renderBrandResonanceWavesLayer(PGraphics pg, MutableBrand brand, MutationPa
   int stride = max(1, (int) ceil(brand.currentPoints.size() / float(target)));
   for (int pass = 0; pass < 4; pass++) {
     applyBrandColor(pg, params, 40 + pass * 8 + bass * 20, false, pass % 2 == 1);
-    pg.strokeWeight(max(0.38, (0.56 + pass * 0.14 + treble * 0.16) / max(0.001, fit)));
+    pg.strokeWeight(max(0.38, (0.56 + pass * 0.14 + treble * 0.16) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     for (int i = pass; i < brand.currentPoints.size(); i += stride) {
       int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
       if (layer == 2 && i % 3 != 0) continue;
@@ -3215,6 +3377,7 @@ void renderBrandReactionDiffusion(PGraphics pg, MutableBrand brand, MutationPara
       float px = rdMinX + x * cellW - brand.center.x;
       float py = rdMinY + y * cellH - brand.center.y;
       float d = max(0.7, min(cellW, cellH) * (0.36 + mark * 0.82 + bass * 0.12));
+      d *= escalaGrossuraPontos();
       if ((x + y) % 3 == 0 || mark > 0.62) {
         pg.ellipse(px + cellW * 0.5, py + cellH * 0.5, d, d);
       }
@@ -3225,7 +3388,7 @@ void renderBrandReactionDiffusion(PGraphics pg, MutableBrand brand, MutationPara
   pg.noFill();
   pg.strokeCap(ROUND);
   applyBrandColor(pg, params, 32 + energy * 34, false, false);
-  pg.strokeWeight(max(0.28, (0.38 + bass * 0.42) / max(0.001, fit)));
+  pg.strokeWeight(max(0.28, (0.38 + bass * 0.42) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
   for (int y = 1; y < rdRows - 1; y += 3) {
     boolean drawing = false;
     for (int x = 1; x < rdCols - 1; x += 2) {
@@ -3420,6 +3583,7 @@ void renderBrandSand(PGraphics pg, MutableBrand brand, MutationParams params, fl
   float maxR = max(1, brand.span() * 0.54);
   int stride = max(1, (int) ceil(brand.currentPoints.size() / max(1300, brand.maxRenderPoints * lerp(0.85, 1.65, solid))));
   float grain = max(0.56, (0.88 + solid * 0.22) / max(0.001, fit));
+  grain *= escalaGrossuraPontos();
 
   for (int pass = 0; pass < 3; pass++) {
     boolean secondary = pass == 1;
@@ -3503,6 +3667,7 @@ void renderBrandWaveRibbons(PGraphics pg, MutableBrand brand, MutationParams par
   int stride = max(1, (int) ceil(brand.currentPoints.size() / ribbonBudget));
   float lineAlpha = 26 + audio.mid * 58 + audio.energy * 22;
   float bandWeight = max(0.32, (1.2 + audio.bass * 4.2 + params.strokeAmount * 0.22) / max(0.001, fit));
+  bandWeight *= escalaGrossuraLinhasDePontos();
   float brandHeight = max(1, brand.maxY - brand.minY);
   int ribbons = 18;
   for (int r = 0; r < ribbons; r++) {
@@ -3576,7 +3741,7 @@ void renderBrandFilaments(PGraphics pg, MutableBrand brand, MutationParams param
   for (int pass = 0; pass < 2; pass++) {
     float phase = seedValue * 24.0 + pass * 1.7;
     applyBrandColor(pg, params, 30 + pass * 18, false, pass == 1);
-    pg.strokeWeight(max(0.28, (0.55 + pass * 0.22 + audio.energy * 1.45 + audio.treble * 0.75) / max(0.001, fit)));
+    pg.strokeWeight(max(0.28, (0.55 + pass * 0.22 + audio.energy * 1.45 + audio.treble * 0.75) / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     boolean desenhando = false;
     PVector previous = null;
     for (int i = 0; i < visibleCount; i += stride) {
@@ -3613,7 +3778,7 @@ void renderBrandGrid(PGraphics pg, MutableBrand brand, MutationParams params, fl
   float solid = constrain(params.solidness, 0, 1);
   int stride = max(1, (int) ceil(brand.currentPoints.size() / max(320, brand.maxRenderPoints * lerp(0.30, 0.55, solid))));
   float gridSnap = max(4.0, (8.0 + audio.bass * 10.0 + audio.mid * 3.0) / max(0.001, fit));
-  float cell = gridSnap * (0.88 + audio.energy * 0.18);
+  float cell = gridSnap * (0.88 + audio.energy * 0.18) * escalaGrossuraPontos();
   for (int i = 0; i < brand.currentPoints.size(); i += stride) {
     int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
     if (layer == 2 && solid < 0.45 && i % 3 != 0) continue;
@@ -4424,15 +4589,15 @@ void desenharFotoObjetoCircular(PGraphics pg, PImage img, float cx, float cy, fl
 
 void desenharFotoObjetoForma(PGraphics pg, PImage img, float cx, float cy, float w, float h, int forma, float alpha) {
   if (w <= 2 || h <= 2) return;
-  if (forma == 5 || forma == 6) {
-    desenharFotoObjetoMarcaPanfleto(pg, img, cx, cy, w, h, alpha, forma == 6);
+  if (forma == 4) {
+    desenharFotoObjetoMarcaPanfleto(pg, img, cx, cy, w, h, alpha, false);
     return;
   }
   if (forma == 0) {
     desenharFotoObjetoCircular(pg, img, cx, cy, min(w, h), alpha);
     return;
   }
-  if (forma == 4) {
+  if (forma == 2) {
     desenharFotoObjetoRetangular(pg, img, cx - w * 0.5, cy - h * 0.5, w, h, alpha, 8);
     return;
   }
@@ -4524,19 +4689,17 @@ void desenharFotoObjetoMarcaPanfleto(PGraphics pg, PImage img, float cx, float c
 }
 
 void desenharMascaraFormaObjeto(PGraphics pg, float cx, float cy, float w, float h, int forma) {
-  if (forma == 5 || forma == 6) {
+  if (forma == 4) {
     pg.rect(cx - w * 0.5, cy - h * 0.5, w, h, 8);
   } else if (forma == 1) {
-    pg.ellipse(cx, cy, w, h * 0.72);
-  } else if (forma == 2) {
     float s = min(w, h);
     pg.rect(cx - s * 0.5, cy - s * 0.5, s, s, 2);
   } else if (forma == 3) {
     pg.beginShape();
-    pg.vertex(cx, cy - h * 0.5);
-    pg.vertex(cx + w * 0.5, cy);
-    pg.vertex(cx, cy + h * 0.5);
-    pg.vertex(cx - w * 0.5, cy);
+    pg.vertex(cx - w * 0.5, cy + h * 0.5);
+    pg.vertex(cx - w * 0.5, cy - h * 0.08);
+    pg.bezierVertex(cx - w * 0.5, cy - h * 0.55, cx + w * 0.5, cy - h * 0.55, cx + w * 0.5, cy - h * 0.08);
+    pg.vertex(cx + w * 0.5, cy + h * 0.5);
     pg.endShape(CLOSE);
   } else {
     pg.rect(cx - w * 0.5, cy - h * 0.5, w, h, 8);
@@ -4544,19 +4707,17 @@ void desenharMascaraFormaObjeto(PGraphics pg, float cx, float cy, float w, float
 }
 
 void desenharContornoFormaObjeto(PGraphics pg, float cx, float cy, float w, float h, int forma) {
-  if (forma == 5 || forma == 6) {
+  if (forma == 4) {
     pg.rect(cx - w * 0.5, cy - h * 0.5, w, h, 8);
   } else if (forma == 1) {
-    pg.ellipse(cx, cy, w, h * 0.72);
-  } else if (forma == 2) {
     float s = min(w, h);
     pg.rect(cx - s * 0.5, cy - s * 0.5, s, s, 2);
   } else if (forma == 3) {
     pg.beginShape();
-    pg.vertex(cx, cy - h * 0.5);
-    pg.vertex(cx + w * 0.5, cy);
-    pg.vertex(cx, cy + h * 0.5);
-    pg.vertex(cx - w * 0.5, cy);
+    pg.vertex(cx - w * 0.5, cy + h * 0.5);
+    pg.vertex(cx - w * 0.5, cy - h * 0.08);
+    pg.bezierVertex(cx - w * 0.5, cy - h * 0.55, cx + w * 0.5, cy - h * 0.55, cx + w * 0.5, cy - h * 0.08);
+    pg.vertex(cx + w * 0.5, cy + h * 0.5);
     pg.endShape(CLOSE);
   } else {
     pg.rect(cx - w * 0.5, cy - h * 0.5, w, h, 8);
@@ -4596,7 +4757,7 @@ void desenharObjetosFotoEditorial(PGraphics pg, float x, float y, float w, float
   PImage img = fotoEditorialPanfleto();
   pg.pushStyle();
   pg.colorMode(RGB, 255);
-  int qtd = constrain(panfletoObjetoQuantidade, 1, 6);
+  int qtd = constrain(panfletoObjetoQuantidade, 1, 4);
   int forma = constrain(panfletoObjetoForma, 0, panfletoObjetoFormaLabels.length - 1);
 
   if (layout == 0) {
@@ -4604,28 +4765,29 @@ void desenharObjetosFotoEditorial(PGraphics pg, float x, float y, float w, float
     float cy = y + h * 0.80;
     for (int i = 0; i < qtd; i++) {
       float u = qtd == 1 ? 0.5 : map(i, 0, qtd - 1, 0.18, 0.82);
-      desenharFotoObjetoForma(pg, img, x + w * u, cy + sin(i * 1.7) * h * 0.018, d, d * (forma == 4 ? 0.72 : 1.0), forma, 232);
+      desenharFotoObjetoForma(pg, img, x + w * u, cy, d, d * (forma == 2 ? 0.72 : 1.0), forma, 232);
     }
   } else if (layout == 1) {
+    float py = y + h * 0.48;
     for (int i = 0; i < qtd; i++) {
       float sc = 1.0 - i * 0.10;
       float px = x + w * (0.70 + (i - (qtd - 1) * 0.5) * 0.055);
-      float py = y + h * (0.48 + sin(i * 1.3) * 0.045);
-      desenharFotoObjetoForma(pg, img, px, py, w * 0.62 * sc, w * 0.62 * sc * (forma == 4 ? 0.72 : 1.0), forma, 235 - i * 12);
+      desenharFotoObjetoForma(pg, img, px, py, w * 0.62 * sc, w * 0.62 * sc * (forma == 2 ? 0.72 : 1.0), forma, 235 - i * 12);
     }
   } else if (layout == 2) {
+    float cy = y + h * 0.98;
     for (int i = 0; i < qtd; i++) {
       float u = qtd == 1 ? 0.54 : map(i, 0, qtd - 1, 0.24, 0.84);
       float d = w * (0.82 - i * 0.045);
-      desenharFotoObjetoForma(pg, img, x + w * u, y + h * (0.98 + sin(i) * 0.035), d, d * (forma == 4 ? 0.66 : 1.0), forma, 238 - i * 10);
+      desenharFotoObjetoForma(pg, img, x + w * u, cy, d, d * (forma == 2 ? 0.66 : 1.0), forma, 238 - i * 10);
     }
   } else if (layout == 3) {
     for (int i = 0; i < qtd; i++) {
       float px = x + w * (0.25 + (i % 3) * 0.20);
-      float py = y + h * (0.38 + (i / 3) * 0.23 + sin(i * 1.1) * 0.035);
+      float py = y + h * (0.38 + (i / 3) * 0.23);
       float ow = w * (0.30 + (i % 2) * 0.08);
       float oh = h * (0.20 + ((i + 1) % 2) * 0.10);
-      desenharFotoObjetoForma(pg, img, px, py, ow, oh, forma == 0 ? 4 : forma, 225 - i * 10);
+      desenharFotoObjetoForma(pg, img, px, py, ow, oh, forma == 0 ? 2 : forma, 225 - i * 10);
     }
     pg.fill(bgR, bgG, bgB, 38);
     pg.rect(x + w * 0.50, y + h * 0.40, w * 0.16, h * 0.42);
@@ -4824,7 +4986,8 @@ void desenharPanfleto(PGraphics pg) {
   // }
 
   float marcaEditorialAlpha = panfletoLayoutAtivo == 4 ? 112 : 62;
-  desenharMarcaNoPanfleto(pg, marcaCx, marcaCy, marcaW * (panfletoLayoutAtivo == 4 ? 0.78 : 0.42), txR, txG, txB, marcaEditorialAlpha);
+  float marcaRenderW = marcaW * (panfletoLayoutAtivo == 4 ? 0.82 : 0.56);
+  desenharMarcaNoPanfleto(pg, marcaCx, marcaCy, marcaRenderW, txR, txG, txB, marcaEditorialAlpha);
 
   if (panfletoLogoExtraAtiva && activeBrand != null) {
     float extraW = w * 0.42 * constrain(panfletoLogoExtraEscala, 0.08, 4.0);
@@ -4885,25 +5048,10 @@ void desenharEstampaNoPanfleto(PGraphics pg, float px, float py, float pw, float
   else pg.blendMode(BLEND);
   pg.clip(round(ax), round(ay), round(aw), round(ah));
 
-  int corA = mutationParams != null ? mutationParams.primaryColor : corRGBA255(txR, txG, txB, 255);
-  int corB = mutationParams != null ? mutationParams.secondaryColor : UI_GREEN;
+  int corA = mutationParams != null ? corMarcaRenderBaseAjustada(mutationParams, false) : corRGBA255(txR, txG, txB, 255);
+  int corB = mutationParams != null ? corMarcaRenderBaseAjustada(mutationParams, true) : UI_GREEN;
   float ar = canalR(corA), ag = canalG(corA), ab = canalB(corA);
   float br = canalR(corB), bg = canalG(corB), bb = canalB(corB);
-  if (ar + ag + ab < 16) {
-    ar = txR; ag = txG; ab = txB;
-  }
-  if (br + bg + bb < 16) {
-    br = 33; bg = 150; bb = 243;
-  }
-  boolean fundoEscuro = (txR + txG + txB) > 520;
-  if (fundoEscuro) {
-    ar = 32;
-    ag = 210;
-    ab = 184;
-    br = 244;
-    bg = 82;
-    bb = 146;
-  }
 
   int modo = constrain(formaPadraoAtiva, 0, estampaModoLabels.length - 1);
   float rep = constrain(panfletoEstampaRepeticao, 0.4, 4.0);
@@ -5040,24 +5188,12 @@ void desenharMascarasOrganicasPanfleto(PGraphics pg, float px, float py, float p
   float mid = audioData != null ? constrain(audioData.mid * 1.20, 0, 1.55) : 0;
   float treble = audioData != null ? constrain(audioData.treble * 1.35, 0, 1.75) : 0;
   float t = noiseDynamicTime * (0.35 + treble * 0.22) + semente * 0.10;
-  int corA = mutationParams != null ? mutationParams.primaryColor : corRGBA255(txR, txG, txB, 255);
-  int corB = mutationParams != null ? mutationParams.secondaryColor : UI_GREEN;
+  int corA = mutationParams != null ? corMarcaRenderBaseAjustada(mutationParams, false) : corRGBA255(txR, txG, txB, 255);
+  int corB = mutationParams != null ? corMarcaRenderBaseAjustada(mutationParams, true) : UI_GREEN;
   float ar = canalR(corA), ag = canalG(corA), ab = canalB(corA);
   float br = canalR(corB), bg = canalG(corB), bb = canalB(corB);
-  if (ar + ag + ab < 16) {
-    ar = txR; ag = txG; ab = txB;
-  }
-  if (br + bg + bb < 16) {
-    br = 33; bg = 150; bb = 243;
-  }
-  boolean fundoEscuro = (txR + txG + txB) < 270;
-  if (fundoEscuro) {
-    ar = 30; ag = 220; ab = 188;
-    br = 245; bg = 88; bb = 152;
-  }
-
   pg.pushStyle();
-  pg.blendMode(fundoEscuro ? SCREEN : BLEND);
+  pg.blendMode(BLEND);
   pg.rectMode(CENTER);
   pg.clip(round(px), round(py), round(pw), round(ph));
 
@@ -5433,12 +5569,44 @@ void desenharMarcaAoVivoNoPanfleto(PGraphics pg, MutableBrand brand, float cx, f
 
   float assetW = max(1, brand.maxX - brand.minX);
   float fit = alvoW / assetW;
+  boolean precisaLegibilidade = alvoW < 260 || fit < 0.44;
 
   pg.pushStyle();
   pg.colorMode(HSB, 360, 100, 100, 100);
   pg.noTint();
-  renderMutableBrandEmPonto(pg, brand, mutationParams, audioData, gestureData, semente, 1.0, cx, cy, fit);
+  if (precisaLegibilidade) {
+    desenharMarcaPanfletoLegivel(pg, brand, fit, cx, cy);
+  } else {
+    renderMutableBrandEmPonto(pg, brand, mutationParams, audioData, gestureData, semente, 1.0, cx, cy, fit);
+  }
   pg.popStyle();
+}
+
+void desenharMarcaPanfletoLegivel(PGraphics pg, MutableBrand brand, float fit, float cx, float cy) {
+  if (brand == null || mutationParams == null) return;
+
+  pg.pushMatrix();
+  pg.translate(cx, cy);
+  pg.scale(fit);
+
+  float energia = audioData != null ? constrain(audioData.energy, 0, 1) : 0;
+  float bass = audioData != null ? constrain(audioData.bass, 0, 1) : 0;
+
+  if (brand.sourceShape != null || brand.sourceImage != null) {
+    renderBrandOriginalCleanAlpha(pg, brand, mutationParams, fit, 88 + energia * 10);
+  }
+
+  if (brand.hasPointData) {
+    pg.pushStyle();
+    pg.colorMode(HSB, 360, 100, 100, 100);
+    renderBrandStructuralTrace(pg, brand, mutationParams, fit, 38 + energia * 20, true, true);
+    renderBrandPointDots(pg, brand, mutationParams, fit, true, 54 + bass * 22);
+    pg.popStyle();
+  } else if (brand.sourceShape == null && brand.sourceImage == null) {
+    renderBrandOriginalCleanAlpha(pg, brand, mutationParams, fit, 96);
+  }
+
+  pg.popMatrix();
 }
 
 void desenharMarcaImagemOriginalPanfleto(PGraphics pg, PImage img, float cx, float cy, float w, float h) {
@@ -5478,7 +5646,7 @@ void desenharMarcaMutavelNoPanfleto(PGraphics pg, MutableBrand brand, float cx, 
     pg.shapeMode(CORNER);
     pg.noFill();
     pg.stroke(tr, tg, tb, min(255, localAlpha));
-    pg.strokeWeight(max(0.55, brand.currentStroke / max(0.001, fit)));
+    pg.strokeWeight(max(0.55, brand.currentStroke / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
     pg.shape(brand.sourceShape, -brand.center.x, -brand.center.y);
     brand.sourceShape.enableStyle();
   }
@@ -5487,13 +5655,13 @@ void desenharMarcaMutavelNoPanfleto(PGraphics pg, MutableBrand brand, float cx, 
     ArrayList<PVector> pontos = brand.currentPoints;
     int stride = max(1, (int) ceil(pontos.size() / brand.maxRenderPoints));
     float breakDistance = brand.span() * 0.14;
-    float dot = max(0.85, 1.6 / max(0.001, fit));
+    float dot = max(0.85, 1.6 / max(0.001, fit)) * escalaGrossuraPontos();
     float solid = mutationParams != null ? constrain(mutationParams.solidness, 0, 1) : 0.65;
 
     if (modoMarca == 1 || modoMarca == 8) {
       pg.noStroke();
       pg.fill(tr, tg, tb, localAlpha);
-      float blob = max(dot * 1.4, (modoMarca == 8 ? 4.2 : 3.0) / max(0.001, fit));
+      float blob = max(dot * 1.4, ((modoMarca == 8 ? 4.2 : 3.0) / max(0.001, fit)) * escalaGrossuraPontos());
       for (int i = 0; i < pontos.size(); i += stride) {
         int layer = brand.pointLayer.size() > i ? brand.pointLayer.get(i) : 1;
         if (layer == 2 && solid < 0.40 && i % 4 != 0) continue;
@@ -5505,7 +5673,7 @@ void desenharMarcaMutavelNoPanfleto(PGraphics pg, MutableBrand brand, float cx, 
     } else if (modoMarca == 3) {
       pg.noFill();
       pg.stroke(tr, tg, tb, localAlpha);
-      pg.strokeWeight(max(0.45, brand.currentStroke / max(0.001, fit)));
+      pg.strokeWeight(max(0.45, brand.currentStroke / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
       for (int i = 0; i < pontos.size(); i += stride) {
         PVector p = pontos.get(i);
         float a = noise(p.x * 0.014, p.y * 0.014, semente) * TWO_PI;
@@ -5516,7 +5684,7 @@ void desenharMarcaMutavelNoPanfleto(PGraphics pg, MutableBrand brand, float cx, 
     } else if (modoMarca == 5) {
       pg.noStroke();
       pg.fill(tr, tg, tb, localAlpha);
-      float cell = max(1.8, 4.0 / max(0.001, fit));
+      float cell = max(1.8, 4.0 / max(0.001, fit)) * escalaGrossuraPontos();
       float snap = cell * 1.35;
       for (int i = 0; i < pontos.size(); i += stride) {
         PVector p = pontos.get(i);
@@ -5535,7 +5703,7 @@ void desenharMarcaMutavelNoPanfleto(PGraphics pg, MutableBrand brand, float cx, 
     } else {
       pg.noFill();
       pg.stroke(tr, tg, tb, localAlpha);
-      pg.strokeWeight(max(0.45, brand.currentStroke / max(0.001, fit)));
+      pg.strokeWeight(max(0.45, brand.currentStroke / max(0.001, fit)) * escalaGrossuraLinhasDePontos());
       boolean desenhando = false;
       PVector previous = null;
       for (int i = 0; i < pontos.size(); i += stride) {

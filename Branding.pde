@@ -392,7 +392,8 @@ boolean carregarMarcaDireta(File selection) {
       asset.maxX = base.width * 0.5;
       asset.maxY = base.height * 0.5;
       asset.center.set(0, 0);
-      asset.prepararPontosRasterLeves(base);
+      boolean pontosVetoriais = asset.prepararPontosSVGGeomerative(caminhoImportado != null ? caminhoImportado : caminhoOriginal, shape, base);
+      if (!pontosVetoriais) asset.prepararPontosRasterLeves(base);
       asset.pointCloudOnly = true;
       ok = true;
     }
@@ -812,10 +813,10 @@ void aplicarLayoutPanfleto(int idx) {
     panfletoMascaraW[2] = 0.42;
     panfletoMascaraH[2] = 0.24;
     panfletoMascaraRot[2] = -0.28;
-    formaPadraoAtiva = 4;
+    formaPadraoAtiva = 24;
     panfletoTextoValores[0] = "FULL IMAGE STUDY";
     panfletoTextoValores[1] = "Background image as editorial atmosphere.";
-    panfletoTextoValores[2] = "LIVE IDENTITY";
+    panfletoTextoValores[2] = "IDENTITY";
     panfletoTextoValores[3] = "46";
     panfletoTextoValores[4] = "16";
     panfletoTextoValores[5] = "12";
@@ -828,7 +829,8 @@ float ratioFormatoPanfleto() {
   if (panfletoFormatoAtivo == 1) return 297.0 / 210.0;
   if (panfletoFormatoAtivo == 2) return 1080.0 / 1350.0;
   if (panfletoFormatoAtivo == 3) return 1080.0 / 1920.0;
-  if (panfletoFormatoAtivo == 4) return 5.0 / 15.0;
+  if (panfletoFormatoAtivo == 4) return 1920.0 / 1080.0;
+  if (panfletoFormatoAtivo == 5) return 1063.0 / 591.0;
   return 210.0 / 297.0;
 }
 
@@ -1029,7 +1031,7 @@ class MutationParams {
   color backgroundColor = color(0, 0, 6, 100);
 
   void randomize() {
-    int[] modosAtivos = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 17, 19 };
+    int[] modosAtivos = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 19 };
     mode = modosAtivos[floor(random(modosAtivos.length))];
     if (mode == 5) mode = floor(random(0, 5));
     deformationMode = floor(random(0, deformationModeLabels.length));
@@ -1172,7 +1174,8 @@ class MutableBrand {
       minY = -sourceImage.height * 0.5;
       maxY = sourceImage.height * 0.5;
       center.set(0, 0);
-      prepararPontosRasterLeves(sourceImage);
+      boolean pontosVetoriais = prepararPontosSVGGeomerative(filename, sourceShape, sourceImage);
+      if (!pontosVetoriais) prepararPontosRasterLeves(sourceImage);
     } else {
       extractPointsFromRenderedShape(sourceShape);
       pointCloudOnly = originalPoints.size() > 0;
@@ -1376,6 +1379,114 @@ class MutableBrand {
     }
     hasPointData = originalPoints.size() > 1;
     pointCloudOnly = hasPointData;
+  }
+
+  boolean prepararPontosSVGGeomerative(String filename, PShape shape, PImage rasterBase) {
+    if (!geomerativeReady || filename == null || rasterBase == null || rasterBase.width <= 0 || rasterBase.height <= 0) return false;
+    try {
+      String caminho = caminhoArquivoExistente(filename);
+      if (caminho == null) return false;
+
+      float sw = shape != null && shape.width > 1 ? shape.width : rasterBase.width;
+      float sh = shape != null && shape.height > 1 ? shape.height : rasterBase.height;
+      float svgSpan = max(sw, sh);
+      RG.setPolygonizer(RG.UNIFORMLENGTH);
+      RG.setPolygonizerLength(max(1.0, svgSpan / 520.0));
+
+      RShape rshape = RG.loadShape(caminho);
+      if (rshape == null) return false;
+      RPoint[][] paths = rshape.getPointsInPaths();
+      if (paths == null || paths.length == 0) return false;
+
+      originalPoints.clear();
+      currentPoints.clear();
+      breakBefore.clear();
+      pointLayer.clear();
+
+      float sx = max(0.001, (rasterBase.width - 8.0) / max(1.0, sw));
+      float sy = max(0.001, (rasterBase.height - 8.0) / max(1.0, sh));
+      float scale = min(sx, sy);
+      float ox = 4.0 - rasterBase.width * 0.5;
+      float oy = 4.0 - rasterBase.height * 0.5;
+
+      for (int p = 0; p < paths.length; p++) {
+        RPoint[] pts = paths[p];
+        if (pts == null || pts.length < 2) continue;
+        int pathStride = max(1, ceil(pts.length / 1800.0));
+        for (int i = 0; i < pts.length; i += pathStride) {
+          RPoint rp = pts[i];
+          if (rp == null) continue;
+          originalPoints.add(new PVector(rp.x * scale + ox, rp.y * scale + oy));
+          breakBefore.add(i == 0);
+          pointLayer.add(0);
+        }
+      }
+
+      int contourCount = originalPoints.size();
+      if (contourCount < 24) {
+        originalPoints.clear();
+        currentPoints.clear();
+        breakBefore.clear();
+        pointLayer.clear();
+        return false;
+      }
+
+      adicionarPreenchimentoSVGDeMascara(rasterBase, contourCount);
+      for (int i = 0; i < originalPoints.size(); i++) currentPoints.add(originalPoints.get(i).copy());
+      hasPointData = originalPoints.size() > 1;
+      pointCloudOnly = hasPointData;
+      minX = -rasterBase.width * 0.5;
+      maxX = rasterBase.width * 0.5;
+      minY = -rasterBase.height * 0.5;
+      maxY = rasterBase.height * 0.5;
+      center.set(0, 0);
+      return hasPointData;
+    } catch (Exception e) {
+      println("Falha na leitura vetorial Geomerative: " + e.getMessage());
+      originalPoints.clear();
+      currentPoints.clear();
+      breakBefore.clear();
+      pointLayer.clear();
+      return false;
+    }
+  }
+
+  void adicionarPreenchimentoSVGDeMascara(PImage img, int contourCount) {
+    if (img == null) return;
+    if (img.pixels == null || img.pixels.length == 0) img.loadPixels();
+    int targetFill = constrain(round(contourCount * 0.62), 900, 4300);
+    int maxAttempts = targetFill * 20;
+    float minFillDist = max(2.0, min(img.width, img.height) / 155.0);
+    for (int i = 0; i < maxAttempts && originalPoints.size() < contourCount + targetFill; i++) {
+      int sx = constrain(floor(hash1D(i, 74.11) * img.width), 1, img.width - 2);
+      int sy = constrain(floor(hash1D(i, 121.3) * img.height), 1, img.height - 2);
+      if (alphaSVGGeomerative(img, sx, sy) < 38) continue;
+      int layer = alphaSVGGeomerative(img, sx - 4, sy) < 38 || alphaSVGGeomerative(img, sx + 4, sy) < 38 ||
+                  alphaSVGGeomerative(img, sx, sy - 4) < 38 || alphaSVGGeomerative(img, sx, sy + 4) < 38 ? 1 : 2;
+      if (layer == 2 && hash1D(sx + sy * 13, 5.4) < 0.40) continue;
+      if (pontoRasterTemEspaco(sx, sy, minFillDist, 1)) {
+        originalPoints.add(new PVector(sx - img.width * 0.5, sy - img.height * 0.5));
+        breakBefore.add(true);
+        pointLayer.add(layer);
+      }
+    }
+  }
+
+  int alphaSVGGeomerative(PImage img, int x, int y) {
+    x = constrain(x, 0, img.width - 1);
+    y = constrain(y, 0, img.height - 1);
+    return (img.pixels[y * img.width + x] >>> 24) & 0xFF;
+  }
+
+  String caminhoArquivoExistente(String filename) {
+    if (filename == null || filename.length() == 0) return null;
+    File f = new File(filename);
+    if (f.exists()) return f.getAbsolutePath();
+    f = new File(dataPath(filename));
+    if (f.exists()) return f.getAbsolutePath();
+    f = new File(sketchPath(filename));
+    if (f.exists()) return f.getAbsolutePath();
+    return null;
   }
 
   void resamplePontosImagemSuave(PImage img, boolean transparentMode, float bgR, float bgG, float bgB) {
@@ -1739,22 +1850,19 @@ class MutableBrand {
       }
 
       if (params.mode == 10) {
-        float follicleNoise = noise(origin.x * 0.022 + 61.0, origin.y * 0.022 + 17.0, tNoise * 0.72);
-        float sway = sin(tNoise * 9.0 + i * 0.083 + follicleNoise * TWO_PI) * params.deformationAmount * unit * drive * (0.06 + midDrive * 0.20);
-        float lift = params.deformationAmount * unit * drive * (0.05 + bassDrive * 0.14 + trebleDrive * 0.08) * (0.45 + follicleNoise);
-        targetX += normal.x * lift + cos(radial + HALF_PI) * sway;
-        targetY += normal.y * lift + sin(radial + HALF_PI) * sway;
+        float contourNoise = noise(origin.x * 0.014 + 61.0, origin.y * 0.014 + 17.0, tNoise * 0.46);
+        float contourBreath = params.deformationAmount * unit * drive * (0.035 + bassDrive * 0.10 + midDrive * 0.07);
+        float tangentWave = sin(tNoise * 3.4 + i * 0.031 + contourNoise * TWO_PI) * contourBreath * 0.34;
+        targetX += normal.x * contourBreath * (contourNoise - 0.36) + cos(radial + HALF_PI) * tangentWave;
+        targetY += normal.y * contourBreath * (contourNoise - 0.36) + sin(radial + HALF_PI) * tangentWave;
       }
 
       if (params.mode == 11) {
-        float feedFlow = noise(origin.x * 0.018 + 44.0, origin.y * 0.018 + 12.0, tNoise * (0.55 + midDrive * 0.20));
-        float killFlow = noise(origin.x * 0.042 + 9.0, origin.y * 0.042 + 71.0, tNoise * (0.82 + trebleDrive * 0.18));
-        float cellWave = sin((feedFlow * 9.0 + distNorm * 13.0 - tNoise * (2.2 + bassDrive * 1.7)) * TWO_PI);
-        float reactionPush = params.deformationAmount * unit * drive * (0.14 + bassDrive * 0.30 + midDrive * 0.22);
-        float contourPush = cellWave * reactionPush * (0.36 + killFlow * 0.74);
-        float skinJitter = (killFlow - 0.5) * params.noiseAmount * unit * drive * (0.32 + trebleDrive * 0.58);
-        targetX += normal.x * contourPush + cos(radial + HALF_PI) * skinJitter;
-        targetY += normal.y * contourPush + sin(radial + HALF_PI) * skinJitter;
+        float veinFlow = noise(origin.x * 0.020 + 44.0, origin.y * 0.020 + 12.0, tNoise * (0.42 + midDrive * 0.16));
+        float veinPulse = sin((veinFlow * 4.0 + distNorm * 8.0 - tNoise * (1.2 + bassDrive)) * TWO_PI);
+        float veinPush = params.deformationAmount * unit * drive * (0.050 + bassDrive * 0.11 + midDrive * 0.10);
+        targetX += normal.x * veinPulse * veinPush;
+        targetY += normal.y * veinPulse * veinPush;
       }
 
       if (params.angularity > 0.32 || params.mode == 5) {

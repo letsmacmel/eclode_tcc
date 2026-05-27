@@ -2,6 +2,10 @@ import ddf.minim.*;
 import ddf.minim.analysis.*;
 import processing.svg.*;
 import processing.event.*;
+import processing.opengl.*;
+import com.thomasdiewald.pixelflow.java.*;
+import com.thomasdiewald.pixelflow.java.imageprocessing.filter.*;
+import geomerative.*;
 import java.io.*;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -22,6 +26,10 @@ final int UI_LINE = 0x66654940;
 final int UI_MUTED = 0xFFEFEBE8;
 PImage interfaceLogo;
 PShape interfaceLogoSvg;
+boolean geomerativeReady = false;
+DwPixelFlow pixelFlowContext;
+DwFilter pixelFlowFilter;
+boolean pixelFlowReady = false;
 
 // AUDIO
 Minim      minim;
@@ -78,6 +86,7 @@ float noiseDynamicTime = 0;
 
 // SIDE MENU
 boolean mostrarBarra = true;
+boolean modoMarcaTelaCheia = false;
 float   menuWidth    = 330;
 float   menuOffsetX  = 0;
 float   menuTabWidth = 36;
@@ -115,8 +124,10 @@ float[] resetBrandButton = new float[4];
 float[] freezeBrandButton = new float[4];
 float[] exportPngButton = new float[4];
 float[] brandToggleButton = new float[4];
+float[][] brandBackgroundButtons = new float[2][4];
+boolean marcaFundoBranco = false;
 float[][] mutationModeButtons = new float[20][4];
-String[] mutationModeLabels = { "ORIGINAL", "MASSA", "PONTOS", "LINHAS", "PARTÍCULAS", "GRID", "ECO", "PERLIN", "AREIA", "PELÚCIA", "DERRETE", "INATIVO", "EXPANDE", "ENCOLHE", "MALHA", "INATIVO", "INATIVO", "RASTRO", "INATIVO", "ONDAS" };
+String[] mutationModeLabels = { "ORIGINAL", "MASSA", "PONTOS", "LINHAS", "PARTÍCULAS", "GRID", "ECO", "PERLIN", "AREIA", "PELÚCIA", "CONTORNO", "NERVURAS", "EXPANDE", "ENCOLHE", "MALHA", "INATIVO", "INATIVO", "RASTRO", "INATIVO", "ONDAS" };
 float[][] rdA, rdB, rdNextA, rdNextB, rdMask;
 int rdCols = 0, rdRows = 0, rdBrandSignature = -1;
 float rdMinX = 0, rdMinY = 0, rdMaxX = 0, rdMaxY = 0, rdComplexityKey = -1;
@@ -127,6 +138,8 @@ String[] identityPresetLabels = { "PULSO", "MODULAR", "ECLOSÃO", "FANTASMA", "N
 float[][] meshDetailButtons = new float[0][4];
 String[] meshDetailLabels = {};
 float[] pointDensitySlider = new float[6];
+float[] pointThicknessSlider = new float[6];
+float pointDotThickness = 1.0;
 float[][] frequencyInfluenceSliders = new float[4][6];
 String[] frequencyInfluenceLabels = { "Grave", "Médio", "Agudo", "Suavização" };
 float[][] paletteButtons = new float[4][4];
@@ -158,6 +171,7 @@ String marcaPaletaHexValor = "#FFFFFF";
 boolean marcaPaletaHexAtivo = false;
 int dragFrequencyInfluenceSlider = -1;
 int dragPointDensitySlider = -1;
+int dragPointThicknessSlider = -1;
 float[][] playlistSlotButtons = new float[6][4];
 float[] playlistSaveButton = new float[4];
 String[] playlistSlotNames = { "Estado 1", "Estado 2", "Estado 3", "Estado 4", "Estado 5", "Estado 6" };
@@ -167,6 +181,7 @@ String[] playlistPresetNames = new String[6];
 int activePlaylistSlot = -1;
 float[][] exportPageButtons = new float[4][4];
 String[] exportPageLabels = { "PNG", "JPG", "SVG", "MP4" };
+float[] exportFullscreenBrandButton = new float[4];
 boolean mostrarBarraPadroes = true;
 float painelPadraoWidth = 310;
 float painelPadraoOffsetX = 0;
@@ -207,6 +222,14 @@ String[] padraoFormaLabels = {
   "Grad.", "Topo.", "Fluxo"
 };
 int formaPadraoAtiva = 0;
+int[] estampaModoIndices = {
+  0, 2, 3,
+  6, 8, 9,
+  11, 15, 16,
+  17, 19, 22,
+  23, 24, 25,
+  26
+};
 float[][] estampaPreviewButtons = new float[4][4];
 String[] estampaPreviewLabels = { "Padrão", "Tile", "Editorial", "Superfície" };
 int estampaPreviewAtivo = 0;
@@ -242,13 +265,13 @@ float[] panfletoModoButton = new float[4];
 float[][] panfletoLayoutButtons = new float[5][4];
 String[] panfletoLayoutLabels = { "Cartaz", "Editorial", "Manifesto", "Evento", "Foto Fundo" };
 int panfletoLayoutAtivo = 0;
-float[][] panfletoObjetoFormaButtons = new float[7][4];
-String[] panfletoObjetoFormaLabels = { "Círculo", "Oval", "Quadrado", "Losango", "Retângulo", "Marca", "Marca live" };
+float[][] panfletoObjetoFormaButtons = new float[5][4];
+String[] panfletoObjetoFormaLabels = { "Círculo", "Quadrado", "Retângulo", "Portal", "Marca" };
 int panfletoObjetoForma = 0;
-float[][] panfletoObjetoQuantidadeButtons = new float[6][4];
+float[][] panfletoObjetoQuantidadeButtons = new float[4][4];
 int panfletoObjetoQuantidade = 3;
-float[][] panfletoFormatoButtons = new float[5][4];
-String[] panfletoFormatoLabels = { "A4 V", "A4 H", "1080x1350", "1080x1920", "5x15 V" };
+float[][] panfletoFormatoButtons = new float[6][4];
+String[] panfletoFormatoLabels = { "A4 V", "A4 H", "1080x1350", "1080x1920 px", "1920x1080 px", "1063x591 cm" };
 int panfletoFormatoAtivo = 0;
 float[] panfletoAvancadoButton = new float[4];
 boolean panfletoAvancadoAberto = false;
@@ -576,12 +599,31 @@ void buildFilamentsModel() {
 void setup() {
   size(1100, 680, P2D);
   surface.setResizable(true);
-  surface.setSize(1100, 680);
+  surface.setLocation(0, 0);
+  surface.setSize(displayWidth, displayHeight);
   pixelDensity(1);
   smooth(8);
   colorMode(HSB, 360, 100, 100, 100);
   frameRate(exportFrameRate);
-
+  try {
+    pixelFlowContext = new DwPixelFlow(this);
+    pixelFlowFilter = DwFilter.get(pixelFlowContext);
+    pixelFlowReady = true;
+  } catch (Exception e) {
+    pixelFlowContext = null;
+    pixelFlowFilter = null;
+    pixelFlowReady = false;
+    println("PixelFlow indisponivel: " + e.getMessage());
+  }
+  try {
+    RG.init(this);
+    RG.setPolygonizer(RG.UNIFORMLENGTH);
+    RG.setPolygonizerLength(3.2);
+    geomerativeReady = true;
+  } catch (Exception e) {
+    geomerativeReady = false;
+    println("Geomerative indisponivel: " + e.getMessage());
+  }
   minim = new Minim(this);
   try {
     mic = minim.getLineIn(Minim.MONO, 1024);
@@ -673,6 +715,10 @@ void draw() {
 
   renderShapeLayer(exportLayer, semente, tempoFlutua, faseFolego);
   image(exportLayer, 0, 0);
+  if (modoMarcaTelaCheia) {
+    atualizarExportacaoVideo();
+    return;
+  }
   desenharBarra();
   desenharColorPicker();
   desenharAvisoStatus();

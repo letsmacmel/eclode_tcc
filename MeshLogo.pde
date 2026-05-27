@@ -282,7 +282,7 @@ class MeshLogo {
     springs.clear();
     triangles.clear();
 
-    int longCells = constrain(round(max(mask.width, mask.height) / 7.0), 78, 260);
+    int longCells = constrain(round(max(mask.width, mask.height) / 5.2), 110, 360);
     if (mask.width >= mask.height) {
       cols = longCells;
       rows = constrain(round(longCells * mask.height / float(mask.width)), 12, 170);
@@ -404,9 +404,9 @@ class MeshLogo {
     float span = max(mask.width, mask.height);
     float unit = span / 500.0;
     float t = noiseDynamicTime * (0.16 + params.transformSpeed * 0.04);
-    float returnK = 0.065 + params.returnSpeed * 0.88;
-    float damping = constrain(0.72 - smoothEnergy * 0.035, 0.62, 0.77);
-    float springK = 0.050 + params.solidness * 0.075;
+    float returnK = 0.085 + params.returnSpeed * 0.95;
+    float damping = constrain(0.80 - smoothEnergy * 0.018, 0.74, 0.84);
+    float springK = 0.070 + params.solidness * 0.095;
     float forceScale = params.deformationAmount * unit * constrain(params.intensity, 0, 2.0);
     float maxOffset = span * constrain(0.014 + params.displacementAmount * 0.00032 + smoothBass * 0.008, 0.012, 0.060);
     boolean modoOriginal = params.mode == 0;
@@ -421,7 +421,7 @@ class MeshLogo {
     } else if (modoEncolhe) {
       maxOffset = span * constrain(0.020 + smoothBass * 0.014 + smoothEnergy * 0.008, 0.016, 0.065);
     } else if (modoMalha) {
-      maxOffset = span * constrain(0.018 + params.displacementAmount * 0.00030 + smoothMid * 0.012, 0.016, 0.072);
+      maxOffset = span * constrain(0.012 + params.displacementAmount * 0.00018 + smoothMid * 0.006, 0.010, 0.040);
     }
 
     for (int i = 0; i < nodes.size(); i++) {
@@ -430,7 +430,7 @@ class MeshLogo {
       PVector home = PVector.sub(n.original, n.position);
       float symbolMix = symbolInfluence(n);
       float textMix = 1.0 - symbolMix;
-      float returnWeight = lerp(1.85, 1.02, symbolMix) * (n.boundary ? lerp(1.42, 1.12, symbolMix) : 1.0);
+      float returnWeight = lerp(2.45, 1.12, symbolMix) * (n.boundary ? lerp(1.86, 1.18, symbolMix) : 1.0);
       n.acceleration.add(PVector.mult(home, returnK * returnWeight));
 
       PVector radial = n.original.copy();
@@ -464,9 +464,9 @@ class MeshLogo {
         midWave = smoothMid * forceScale * 0.0028 * wave * lerp(0.16, 0.42, symbolMix);
         trebleShake *= 0.18;
       } else if (modoMalha) {
-        bassPush *= 0.32;
-        midWave *= 1.12;
-        trebleShake *= 0.70;
+        bassPush *= 0.18;
+        midWave *= lerp(0.28, 0.76, symbolMix);
+        trebleShake *= lerp(0.12, 0.48, symbolMix);
       }
 
       n.acceleration.x += radial.x * bassPush + cos(angle) * midWave + trebleShake * 0.18 * boundaryBoost;
@@ -522,9 +522,8 @@ class MeshLogo {
     pg.colorMode(RGB, 255, 255, 255, 255);
     pg.noStroke();
     pg.textureMode(IMAGE);
-    int c = corMarcaRender(params, false);
-    float a = 255 * constrain(params.opacityAmount, 0, 1) * constrain(alphaPct, 0, 100) / 100.0;
-    pg.tint(red(c), green(c), blue(c), a);
+    int c = corMarcaRenderAjustada(params, false, alphaPct);
+    pg.tint(canalR(c), canalG(c), canalB(c), canalA(c));
     pg.beginShape(TRIANGLES);
     pg.texture(texture);
     for (int i = 0; i < triangles.size(); i++) {

@@ -310,6 +310,7 @@ void limparBotoesPagina() {
   zerarBotao(randomDNAButton);
   zerarBotao(resetBrandButton);
   zerarBotao(freezeBrandButton);
+  zerarBotao(exportFullscreenBrandButton);
   zerarBotao(exportPngButton);
   zerarBotao(brandToggleButton);
   zerarBotao(playlistSaveButton);
@@ -476,6 +477,20 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   brandToggleButton[2] = w;
   brandToggleButton[3] = buttonH;
   desenharBotaoAcaoEstado(brandToggleButton, brandSystemEnabled ? "SISTEMA LIGADO" : "SISTEMA DESLIGADO", brandSystemEnabled);
+  y += buttonH + 8;
+
+  float bgGap = 8;
+  float bgW = (w - bgGap) * 0.5;
+  brandBackgroundButtons[0][0] = x;
+  brandBackgroundButtons[0][1] = y;
+  brandBackgroundButtons[0][2] = bgW;
+  brandBackgroundButtons[0][3] = buttonH;
+  brandBackgroundButtons[1][0] = x + bgW + bgGap;
+  brandBackgroundButtons[1][1] = y;
+  brandBackgroundButtons[1][2] = bgW;
+  brandBackgroundButtons[1][3] = buttonH;
+  desenharBotaoAcaoEstado(brandBackgroundButtons[0], "Fundo preto", !marcaFundoBranco);
+  desenharBotaoAcaoEstado(brandBackgroundButtons[1], "Fundo branco", marcaFundoBranco);
   y += buttonH + 12;
 
   fill(red(UI_MUTED), green(UI_MUTED), blue(UI_MUTED), 185);
@@ -520,6 +535,15 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   pointDensitySlider[4] = 5200;
   pointDensitySlider[5] = densidadePontos;
   desenharSliderGenerico(pointDensitySlider, "Quantidade", 0);
+  y += 48;
+
+  pointThicknessSlider[0] = x;
+  pointThicknessSlider[1] = y + 18;
+  pointThicknessSlider[2] = w;
+  pointThicknessSlider[3] = 0.6;
+  pointThicknessSlider[4] = 4.0;
+  pointThicknessSlider[5] = pointDotThickness;
+  desenharSliderGenerico(pointThicknessSlider, "Grossura", 1);
   y += 54;
 
   y = desenharSecaoLabel("Marca base", x, y, labelSize);
@@ -539,7 +563,7 @@ float desenharPainelDesignEsquerdo(float x, float y, float w, float buttonH, flo
   y += (bh + gap) * baseRows + 20;
 
   y = desenharSecaoLabel("Camadas generativas", x, y, labelSize);
-  int[] generativeModes = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 17, 19 };
+  int[] generativeModes = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 17, 19 };
   for (int k = 0; k < generativeModes.length; k++) {
     int i = generativeModes[k];
     int col = k % buttonCols;
@@ -741,6 +765,13 @@ float desenharPainelExportEsquerdo(float x, float y, float w, float buttonH, flo
   desenharBotaoAcaoEstado(freezeBrandButton, mutationParams != null && mutationParams.freezeState ? "CONGELADO" : "CONGELAR MARCA", mutationParams != null && mutationParams.freezeState);
   y += buttonH + 16;
 
+  exportFullscreenBrandButton[0] = x;
+  exportFullscreenBrandButton[1] = y;
+  exportFullscreenBrandButton[2] = w;
+  exportFullscreenBrandButton[3] = buttonH;
+  desenharBotaoAcaoEstado(exportFullscreenBrandButton, modoMarcaTelaCheia ? "SAIR DA TELA CHEIA" : "TELA CHEIA: MARCA", modoMarcaTelaCheia);
+  y += buttonH + 16;
+
   y = desenharSecaoLabel("Exportar", x, y, labelSize);
   for (int i = 0; i < exportPageButtons.length; i++) {
     exportPageButtons[i][0] = x;
@@ -827,17 +858,20 @@ void desenharMenuPadroes() {
   float smallH = constrain(height * 0.040, 26, 34);
   float bw = (trackWidth - gap) * 0.5;
 
-  for (int i = 0; i < padraoFormaButtons.length; i++) {
+  for (int i = 0; i < padraoFormaButtons.length; i++) zerarBotao(padraoFormaButtons[i]);
+  int totalModosEstampa = estampaModoIndices.length;
+  for (int i = 0; i < totalModosEstampa; i++) {
+    int modoReal = estampaModoIndices[i];
     int col = i % 2;
     int row = i / 2;
     padraoFormaButtons[i][0] = innerX + col * (bw + gap);
     padraoFormaButtons[i][1] = y + row * (smallH + gap);
-    padraoFormaButtons[i][2] = (i == padraoFormaButtons.length - 1 && padraoFormaButtons.length % 2 == 1) ? trackWidth : bw;
+    padraoFormaButtons[i][2] = (i == totalModosEstampa - 1 && totalModosEstampa % 2 == 1) ? trackWidth : bw;
     padraoFormaButtons[i][3] = smallH;
-    desenharBotaoAcaoEstado(padraoFormaButtons[i], padraoFormaLabels[i], formaPadraoAtiva == i);
+    desenharBotaoAcaoEstado(padraoFormaButtons[i], estampaModoLabels[modoReal], formaPadraoAtiva == modoReal);
   }
 
-  y += (smallH + gap) * ceil(padraoFormaButtons.length / 2.0f) + 6;
+  y += (smallH + gap) * ceil(totalModosEstampa / 2.0f) + 6;
   fill(red(UI_GREEN), green(UI_GREEN), blue(UI_GREEN));
   textAlign(LEFT, TOP);
   textSize(labelSize);
@@ -1346,16 +1380,19 @@ float desenharPainelEstampaDireito(float x, float y, float w, float buttonH, flo
   float gap = 8;
   float smallH = constrain(height * 0.040, 27, 34);
   float bw = (w - gap) * 0.5;
-  for (int i = 0; i < padraoFormaButtons.length; i++) {
+  for (int i = 0; i < padraoFormaButtons.length; i++) zerarBotao(padraoFormaButtons[i]);
+  int totalModosEstampa = estampaModoIndices.length;
+  for (int i = 0; i < totalModosEstampa; i++) {
+    int modoReal = estampaModoIndices[i];
     int col = i % 2;
     int row = i / 2;
     padraoFormaButtons[i][0] = x + col * (bw + gap);
     padraoFormaButtons[i][1] = y + row * (smallH + gap);
-    padraoFormaButtons[i][2] = (i == padraoFormaButtons.length - 1 && padraoFormaButtons.length % 2 == 1) ? w : bw;
+    padraoFormaButtons[i][2] = (i == totalModosEstampa - 1 && totalModosEstampa % 2 == 1) ? w : bw;
     padraoFormaButtons[i][3] = smallH;
-    desenharBotaoAcaoEstado(padraoFormaButtons[i], estampaModoLabels[i], formaPadraoAtiva == i);
+    desenharBotaoAcaoEstado(padraoFormaButtons[i], estampaModoLabels[modoReal], formaPadraoAtiva == modoReal);
   }
-  y += (smallH + gap) * ceil(padraoFormaButtons.length / 2.0f) + 22;
+  y += (smallH + gap) * ceil(totalModosEstampa / 2.0f) + 22;
   return y;
 }
 
@@ -1364,7 +1401,8 @@ float desenharControleCorEstampa(float x, float y, float w, float buttonH) {
   estampaCoresMarcaButton[1] = y;
   estampaCoresMarcaButton[2] = w;
   estampaCoresMarcaButton[3] = buttonH;
-  desenharBotaoAcaoEstado(estampaCoresMarcaButton, estampaUsarCoresMarca ? "Cores da marca" : "Cores manuais", estampaUsarCoresMarca);
+  String labelModoCor = estampaGradienteAtivo() ? "3 cores do gradiente" : (estampaUsarCoresMarca ? "Cores da marca" : "Cores manuais");
+  desenharBotaoAcaoEstado(estampaCoresMarcaButton, labelModoCor, estampaGradienteAtivo() || estampaUsarCoresMarca);
   y += buttonH + 12;
 
   float gap = 8;
@@ -1375,7 +1413,7 @@ float desenharControleCorEstampa(float x, float y, float w, float buttonH) {
     estampaColorButtons[i][1] = y;
     estampaColorButtons[i][2] = btnW;
     estampaColorButtons[i][3] = btnH;
-    desenharBotaoAcaoEstado(estampaColorButtons[i], estampaColorLabels[i], estampaColorTarget == i);
+    desenharBotaoAcaoEstado(estampaColorButtons[i], labelCorEstampa(i), estampaColorTarget == i);
     int c = corAtualEstampa(i);
     noStroke();
     fill(canalR(c), canalG(c), canalB(c), canalA(c));
@@ -1477,7 +1515,7 @@ void desenharColorPicker() {
   fill(red(UI_LIGHT), green(UI_LIGHT), blue(UI_LIGHT));
   textAlign(LEFT, TOP);
   textSize(15);
-  text("Janela de cores - " + estampaColorLabels[colorPickerTarget], boxX + 18, boxY + 16);
+  text("Janela de cores - " + labelCorEstampa(colorPickerTarget), boxX + 18, boxY + 16);
 
   colorPickerArea[0] = boxX + 18;
   colorPickerArea[1] = boxY + 52;
@@ -1572,7 +1610,7 @@ float desenharSecaoPanfleto(float innerX, float y, float trackWidth, float butto
   y += layoutH * ceil(panfletoObjetoFormaButtons.length / 2.0f) + gap * max(0, ceil(panfletoObjetoFormaButtons.length / 2.0f) - 1) + rowGap;
 
   float qtdGap = 5;
-  float qtdW = (trackWidth - qtdGap * 5) / 6.0;
+  float qtdW = (trackWidth - qtdGap * max(0, panfletoObjetoQuantidadeButtons.length - 1)) / float(max(1, panfletoObjetoQuantidadeButtons.length));
   for (int i = 0; i < panfletoObjetoQuantidadeButtons.length; i++) {
     panfletoObjetoQuantidadeButtons[i][0] = innerX + i * (qtdW + qtdGap);
     panfletoObjetoQuantidadeButtons[i][1] = y;
