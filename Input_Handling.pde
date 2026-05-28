@@ -534,7 +534,7 @@ boolean handlePageMousePressed() {
       return true;
     }
     if (dentroDoBotao(panfletoExportPngButton)) {
-      salvarPanfletoJPG();
+      salvarPanfletoPNG();
       return true;
     }
     if (dentroDoBotao(panfletoExportMp4Button)) {
@@ -748,14 +748,18 @@ boolean handlePageMousePressed() {
       if (dentroDoBotao(estampaColorButtons[i])) {
         estampaColorTarget = i;
         estampaUsarCoresMarca = false;
+        sincronizarSlidersEstampaHSV();
         mostrarStatus("Cor da estampa: " + labelCorEstampa(i));
         return true;
       }
     }
     for (int i = 0; i < estampaHsvSliders.length; i++) {
-      if (mouseX > estampaHsvSliders[i][0] && mouseX < estampaHsvSliders[i][0] + estampaHsvSliders[i][2] &&
+      float hsvTrackW = max(24, estampaHsvSliders[i][2] - 64);
+      if (mouseX > estampaHsvSliders[i][0] && mouseX < estampaHsvSliders[i][0] + hsvTrackW &&
           mouseY > estampaHsvSliders[i][1] - 10 && mouseY < estampaHsvSliders[i][1] + 12) {
         dragEstampaHsvSlider = i;
+        dragEstampaColorTarget = estampaColorTarget;
+        sincronizarSlidersEstampaHSV();
         atualizarSliderEstampaHSV();
         return true;
       }
@@ -811,7 +815,7 @@ boolean handlePageMousePressed() {
 void executarAcaoExportacao(int opcaoIdx) {
   switch (opcaoIdx) {
     case 0:
-      if (appPage == 2) salvarPanfletoJPG();
+      if (appPage == 2) salvarPanfletoPNG();
       else salvarPNG();
       break;
     case 1:
@@ -863,6 +867,7 @@ void randomizarEstampa() {
 
 void abrirColorPicker(int target) {
   colorPickerTarget = target;
+  estampaColorTarget = target;
   int c = target == 0 ? estampaCorA : (target == 1 ? estampaCorB : estampaCorFundo);
   float[] hsb = java.awt.Color.RGBtoHSB((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, null);
   colorPickerHue = hsb[0];
@@ -907,6 +912,8 @@ void aplicarColorPicker() {
   if (colorPickerTarget == 0) estampaCorA = c;
   else if (colorPickerTarget == 1) estampaCorB = c;
   else estampaCorFundo = c;
+  estampaColorTarget = constrain(colorPickerTarget, 0, 2);
+  sincronizarSlidersEstampaHSV();
 }
 
 boolean estampaGradienteAtivo() {
@@ -1156,6 +1163,7 @@ void mouseReleased() {
   dragSlider = -1;
   dragPadraoSlider = -1;
   dragEstampaHsvSlider = -1;
+  dragEstampaColorTarget = -1;
   dragPanfletoEstampaSlider = -1;
   dragPanfletoMascaraSlider = -1;
   dragPanfletoMarcaSlider = -1;
@@ -1430,12 +1438,23 @@ float[] hsvAtualEstampa() {
   return new float[] { out[0] * 360.0, out[1] * 100.0, out[2] * 100.0, canalA(c) / 255.0 * 100.0 };
 }
 
+void sincronizarSlidersEstampaHSV() {
+  float[] hsv = hsvAtualEstampa();
+  for (int i = 0; i < estampaHsvSliders.length && i < hsv.length; i++) {
+    estampaHsvSliders[i][5] = hsv[i];
+  }
+}
+
 void atualizarSliderEstampaHSV() {
   if (dragEstampaHsvSlider < 0 || dragEstampaHsvSlider >= estampaHsvSliders.length) return;
   int i = dragEstampaHsvSlider;
-  float t = constrain((mouseX - estampaHsvSliders[i][0]) / max(1, estampaHsvSliders[i][2]), 0, 1);
+  int targetAnterior = estampaColorTarget;
+  if (dragEstampaColorTarget >= 0) estampaColorTarget = constrain(dragEstampaColorTarget, 0, 2);
+  float trackW = max(24, estampaHsvSliders[i][2] - 64);
+  float t = constrain((mouseX - estampaHsvSliders[i][0]) / max(1, trackW), 0, 1);
   estampaHsvSliders[i][5] = estampaHsvSliders[i][3] + t * (estampaHsvSliders[i][4] - estampaHsvSliders[i][3]);
   aplicarCorEstampaHSV();
+  if (dragEstampaColorTarget < 0) estampaColorTarget = targetAnterior;
 }
 
 void aplicarCorEstampaHSV() {

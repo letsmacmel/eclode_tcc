@@ -1,12 +1,41 @@
 void salvarPNG() {
   String timestamp = timeStamp();
-  renderShapeLayer(exportLayer, semente, tempoFlutua, faseFolego);
+  exportLayer.beginDraw();
+  exportLayer.clear();
+  renderShapeLayerContent(exportLayer, semente, tempoFlutua, faseFolego, false);
+  exportLayer.endDraw();
   exportLayer.save("shape_" + timestamp + ".png");
   mostrarStatus("PNG exportado com sucesso");
 }
 
 void salvarPanfletoPNG() {
-  salvarPanfletoJPG();
+  String timestamp = timeStamp();
+  int[] tamanho = tamanhoExportPanfleto();
+  int outW = tamanho[0];
+  int outH = tamanho[1];
+
+  PGraphics pg = createGraphics(outW, outH, P2D);
+  pg.smooth(8);
+  try {
+    PImage recorte = capturarRecortePanfletoPreview(-1, false);
+    if (recorte == null) {
+      mostrarStatus("Falha ao capturar panfleto");
+      return;
+    }
+
+    pg.beginDraw();
+    preencherFundoSolidoPanfleto(pg);
+    pg.imageMode(CORNER);
+    pg.noTint();
+    pg.image(recorte, 0, 0, outW, outH);
+    pg.endDraw();
+
+    pg.save(sketchPath("panfleto_" + timestamp + ".png"));
+    mostrarStatus("Panfleto PNG exportado com sucesso");
+  } catch (Exception e) {
+    println("Erro exportando panfleto PNG: " + e.getMessage());
+    mostrarStatus("Falha ao salvar panfleto PNG: " + e.getMessage());
+  }
 }
 
 void salvarPanfletoJPG() {
@@ -68,8 +97,10 @@ void salvarPanfletoMP4() {
 
   String timestamp = timeStamp();
   int[] tamanho = tamanhoExportPanfleto();
-  int outW = tamanho[0];
-  int outH = tamanho[1];
+  int outW = tamanho[0] - (tamanho[0] % 2);
+  int outH = tamanho[1] - (tamanho[1] % 2);
+  outW = max(2, outW);
+  outH = max(2, outH);
   int fps = 24;
   int totalFrames = fps * 10;
   String caminho = sketchPath("panfleto_" + timestamp + ".mp4");
@@ -343,6 +374,7 @@ int[] tamanhoExportPanfleto() {
   if (panfletoFormatoAtivo == 3) return new int[] { 1080, 1920 };
   if (panfletoFormatoAtivo == 4) return new int[] { 1920, 1080 };
   if (panfletoFormatoAtivo == 5) return new int[] { 1063, 591 };
+  if (panfletoFormatoAtivo == 6) return new int[] { 2186, 820 };
   return new int[] { 1240, 1754 };
 }
 

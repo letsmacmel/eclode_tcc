@@ -640,7 +640,7 @@ float desenharPainelPanfletoEsquerdo(float x, float y, float w, float buttonH, f
   panfletoExportPngButton[1] = y;
   panfletoExportPngButton[2] = w;
   panfletoExportPngButton[3] = buttonH;
-  desenharBotaoAcao(panfletoExportPngButton, "Exportar panfleto JPG");
+  desenharBotaoAcao(panfletoExportPngButton, "Exportar panfleto PNG");
   y += buttonH + 8;
 
   panfletoExportMp4Button[0] = x;

@@ -5592,18 +5592,12 @@ void desenharMarcaPanfletoLegivel(PGraphics pg, MutableBrand brand, float fit, f
   float energia = audioData != null ? constrain(audioData.energy, 0, 1) : 0;
   float bass = audioData != null ? constrain(audioData.bass, 0, 1) : 0;
 
-  if (brand.sourceShape != null || brand.sourceImage != null) {
-    renderBrandOriginalCleanAlpha(pg, brand, mutationParams, fit, 88 + energia * 10);
-  }
-
   if (brand.hasPointData) {
     pg.pushStyle();
     pg.colorMode(HSB, 360, 100, 100, 100);
-    renderBrandStructuralTrace(pg, brand, mutationParams, fit, 38 + energia * 20, true, true);
-    renderBrandPointDots(pg, brand, mutationParams, fit, true, 54 + bass * 22);
+    renderBrandStructuralTrace(pg, brand, mutationParams, fit, 46 + energia * 24, true, true);
+    renderBrandPointDots(pg, brand, mutationParams, fit, true, 64 + bass * 26);
     pg.popStyle();
-  } else if (brand.sourceShape == null && brand.sourceImage == null) {
-    renderBrandOriginalCleanAlpha(pg, brand, mutationParams, fit, 96);
   }
 
   pg.popMatrix();

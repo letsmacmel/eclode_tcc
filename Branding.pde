@@ -831,6 +831,7 @@ float ratioFormatoPanfleto() {
   if (panfletoFormatoAtivo == 3) return 1080.0 / 1920.0;
   if (panfletoFormatoAtivo == 4) return 1920.0 / 1080.0;
   if (panfletoFormatoAtivo == 5) return 1063.0 / 591.0;
+  if (panfletoFormatoAtivo == 6) return 4373.0 / 1640.0;
   return 210.0 / 297.0;
 }
 
@@ -1532,10 +1533,11 @@ class MutableBrand {
   }
 
   boolean pontoRasterTemEspaco(int sx, int sy, float minDist, int startLayer) {
+    if (originalPoints.size() == 0) return true;
     float minSq = minDist * minDist;
     int checks = min(80, originalPoints.size());
     for (int j = 0; j < checks; j++) {
-      int idx = floor(hash1D(sx * 3.1 + sy * 7.7 + j, 18.6) * originalPoints.size());
+      int idx = constrain(floor(hash1D(sx * 3.1 + sy * 7.7 + j, 18.6) * originalPoints.size()), 0, originalPoints.size() - 1);
       PVector p = originalPoints.get(idx);
       float px = sx - p.x - (sourceImage != null ? sourceImage.width * 0.5 : 0);
       float py = sy - p.y - (sourceImage != null ? sourceImage.height * 0.5 : 0);
